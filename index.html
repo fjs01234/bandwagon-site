@@ -494,19 +494,19 @@ function App(){
                             </div>
                           </div>
                         ):live.teamStats&&live.teamStats.length>0?(
-                          <div style={{display:"flex",flexDirection:"column",gap:"14px"}}>
-                            <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"4px"}}>TEAM STATS · {live.teamStatsYear||""} · ESPN</div>
+                          <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+                            <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em"}}>{(live.teamStatsYear||"")+" TEAM STATS · ESPN"}</div>
                             {live.teamStats.map((cat,i)=>{
-                              const valid=(cat.stats||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00",""].includes(s.displayValue));
+                              const valid=(cat.stats||cat.athletes||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00",""].includes(s.displayValue));
                               if(!valid.length) return null;
                               return(
                                 <div key={i}>
                                   <div style={{fontSize:"9px",fontFamily:"monospace",color:"#666",letterSpacing:"0.1em",marginBottom:"6px"}}>{(cat.displayName||cat.name||"").toUpperCase()}</div>
-                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"6px"}}>
+                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
                                     {valid.slice(0,10).map((s,j)=>(
-                                      <div key={j} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"7px",padding:"9px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"6px"}}>
-                                        <span style={{fontSize:"10px",fontFamily:"monospace",color:"#777",flexShrink:0}}>{s.shortDisplayName||s.abbreviation||s.name}</span>
-                                        <span style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
+                                      <div key={j} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"7px",padding:"8px 11px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"6px"}}>
+                                        <span style={{fontSize:"9px",fontFamily:"monospace",color:"#777",flexShrink:0}}>{s.shortDisplayName||s.abbreviation||s.name}</span>
+                                        <span style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
                                       </div>
                                     ))}
                                   </div>
