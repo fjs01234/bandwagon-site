@@ -499,31 +499,33 @@ function App(){
                     {viewTab==="players"&&(
                       <div style={{animation:"fadeIn .3s ease"}}>
                         {live.players&&live.players.length>0?(
-                          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                            {live.players.map((p,i)=>(
-                              <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"14px 15px"}}>
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
-                                  <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
-                                  <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
+                          <div>
+                            <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{live.players.length} PLAYERS WITH LIVE STATS</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                              {live.players.map((p,i)=>(
+                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"12px 14px"}}>
+                                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                                    <div style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+                                    <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
+                                  </div>
+                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
+                                    {p.stats.map((s,j)=>(
+                                      <div key={j} style={{background:"#0d0d0d",borderRadius:"5px",padding:"7px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                        <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.l}</span>
+                                        <span style={{fontSize:"12px",fontWeight:"bold",color:"#f0ece4"}}>{s.v}</span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"6px"}}>
-                                  {p.stats.map((s,j)=>(
-                                    <div key={j} style={{background:"#0d0d0d",borderRadius:"6px",padding:"8px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                      <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.l}</span>
-                                      <span style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{s.v}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         ):(
                           <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>
-                            <div>No player stats available via ESPN.</div>
-                            {live._playersMeta&&<div style={{marginTop:"8px",color:"#333"}}>{live._playersMeta}</div>}
+                            No player stats available via ESPN for this team/season.
                           </div>
                         )}
-                        <div style={{marginTop:"10px",padding:"6px",background:"#040404",borderRadius:"5px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>LIVE STATS FROM ESPN · /teams/:id/statistics</div>
+                        <div style={{marginTop:"10px",padding:"6px",background:"#040404",borderRadius:"5px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>LIVE STATS FROM ESPN CORE API</div>
                       </div>
                     )}
 
