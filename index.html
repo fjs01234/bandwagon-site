@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bandwagon Bootcamp</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#080808;color:#f0ece4;font-family:Georgia,serif}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#2e2e2e;border-radius:2px}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes flipIn{0%{opacity:0;transform:rotateY(-90deg) scale(.96)}60%{transform:rotateY(8deg)}100%{opacity:1;transform:rotateY(0) scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tc{transition:all .15s;cursor:pointer}.tc:hover{transform:translateY(-3px);border-color:#444!important}
+.qo{transition:all .13s;cursor:pointer}.qo:hover{border-color:#c8102e!important;background:#1a0808!important;color:#fff!important}
+.sp{transition:all .12s;cursor:pointer}
+.tb{transition:all .12s;cursor:pointer}.tb:hover{background:#1c1c1c!important}
+.tip{cursor:pointer}.tip:hover{background:#181818!important}
+.news-link{color:#ddd;text-decoration:none;display:block;transition:color .12s}.news-link:hover{color:#fff}
+.fav-btn{transition:all .15s;cursor:pointer;border:none;background:none;font-size:18px;padding:0;line-height:1}
+input::placeholder{color:#555}
+input:focus{outline:none;border-color:#444!important}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useCallback}=React;
+const PROXY="https://sports-proxy-a8md.onrender.com";
+const FAV_KEY="bbcamp_favs";
+
+const ALL_TEAMS=[
+  // NFL
+  {name:"Arizona Cardinals",     sport:"NFL",emoji:"🏈",color:"#97233F",accent:"#FFB612",espn:"football/nfl",id:22},
+  {name:"Atlanta Falcons",       sport:"NFL",emoji:"🏈",color:"#A71930",accent:"#A5ACAF",espn:"football/nfl",id:1},
+  {name:"Baltimore Ravens",      sport:"NFL",emoji:"🏈",color:"#241773",accent:"#9E7C0C",espn:"football/nfl",id:33},
+  {name:"Buffalo Bills",         sport:"NFL",emoji:"🏈",color:"#00338D",accent:"#C60C30",espn:"football/nfl",id:2},
+  {name:"Carolina Panthers",     sport:"NFL",emoji:"🏈",color:"#0085CA",accent:"#BFC0BF",espn:"football/nfl",id:29},
+  {name:"Chicago Bears",         sport:"NFL",emoji:"🏈",color:"#0B162A",accent:"#C83803",espn:"football/nfl",id:3},
+  {name:"Cincinnati Bengals",    sport:"NFL",emoji:"🏈",color:"#FB4F14",accent:"#000000",espn:"football/nfl",id:4},
+  {name:"Cleveland Browns",      sport:"NFL",emoji:"🏈",color:"#311D00",accent:"#FF3C00",espn:"football/nfl",id:5},
+  {name:"Dallas Cowboys",        sport:"NFL",emoji:"🏈",color:"#003594",accent:"#869397",espn:"football/nfl",id:6},
+  {name:"Denver Broncos",        sport:"NFL",emoji:"🏈",color:"#FB4F14",accent:"#002244",espn:"football/nfl",id:7},
+  {name:"Detroit Lions",         sport:"NFL",emoji:"🏈",color:"#0076B6",accent:"#B0B7BC",espn:"football/nfl",id:8},
+  {name:"Green Bay Packers",     sport:"NFL",emoji:"🏈",color:"#203731",accent:"#FFB612",espn:"football/nfl",id:9},
+  {name:"Houston Texans",        sport:"NFL",emoji:"🏈",color:"#03202F",accent:"#A71930",espn:"football/nfl",id:34},
+  {name:"Indianapolis Colts",    sport:"NFL",emoji:"🏈",color:"#002C5F",accent:"#A2AAAD",espn:"football/nfl",id:11},
+  {name:"Jacksonville Jaguars",  sport:"NFL",emoji:"🏈",color:"#006778",accent:"#9F792C",espn:"football/nfl",id:30},
+  {name:"Kansas City Chiefs",    sport:"NFL",emoji:"🏈",color:"#E31837",accent:"#FFB81C",espn:"football/nfl",id:12},
+  {name:"Las Vegas Raiders",     sport:"NFL",emoji:"🏈",color:"#000000",accent:"#A5ACAF",espn:"football/nfl",id:13},
+  {name:"Los Angeles Chargers",  sport:"NFL",emoji:"🏈",color:"#0080C6",accent:"#FFC20E",espn:"football/nfl",id:24},
+  {name:"Los Angeles Rams",      sport:"NFL",emoji:"🏈",color:"#003594",accent:"#FFA300",espn:"football/nfl",id:14},
+  {name:"Miami Dolphins",        sport:"NFL",emoji:"🏈",color:"#008E97",accent:"#FC4C02",espn:"football/nfl",id:15},
+  {name:"Minnesota Vikings",     sport:"NFL",emoji:"🏈",color:"#4F2683",accent:"#FFC62F",espn:"football/nfl",id:16},
+  {name:"New England Patriots",  sport:"NFL",emoji:"🏈",color:"#002244",accent:"#C60C30",espn:"football/nfl",id:17},
+  {name:"New Orleans Saints",    sport:"NFL",emoji:"🏈",color:"#D3BC8D",accent:"#101820",espn:"football/nfl",id:18},
+  {name:"New York Giants",       sport:"NFL",emoji:"🏈",color:"#0B2265",accent:"#A71930",espn:"football/nfl",id:19},
+  {name:"New York Jets",         sport:"NFL",emoji:"🏈",color:"#125740",accent:"#FFFFFF",espn:"football/nfl",id:20},
+  {name:"Philadelphia Eagles",   sport:"NFL",emoji:"🏈",color:"#004C54",accent:"#A5ACAF",espn:"football/nfl",id:21},
+  {name:"Pittsburgh Steelers",   sport:"NFL",emoji:"🏈",color:"#FFB612",accent:"#101820",espn:"football/nfl",id:23},
+  {name:"San Francisco 49ers",   sport:"NFL",emoji:"🏈",color:"#AA0000",accent:"#B3995D",espn:"football/nfl",id:25},
+  {name:"Seattle Seahawks",      sport:"NFL",emoji:"🏈",color:"#002244",accent:"#69BE28",espn:"football/nfl",id:26},
+  {name:"Tampa Bay Buccaneers",  sport:"NFL",emoji:"🏈",color:"#D50A0A",accent:"#FF7900",espn:"football/nfl",id:27},
+  {name:"Tennessee Titans",      sport:"NFL",emoji:"🏈",color:"#0C2340",accent:"#4B92DB",espn:"football/nfl",id:10},
+  {name:"Washington Commanders", sport:"NFL",emoji:"🏈",color:"#5A1414",accent:"#FFB612",espn:"football/nfl",id:28},
+  // MLB
+  {name:"Arizona Diamondbacks",  sport:"MLB",emoji:"⚾",color:"#A71930",accent:"#E3D4AD",espn:"baseball/mlb",id:29},
+  {name:"Atlanta Braves",        sport:"MLB",emoji:"⚾",color:"#CE1141",accent:"#13274F",espn:"baseball/mlb",id:15},
+  {name:"Baltimore Orioles",     sport:"MLB",emoji:"⚾",color:"#DF4601",accent:"#27251F",espn:"baseball/mlb",id:1},
+  {name:"Boston Red Sox",        sport:"MLB",emoji:"⚾",color:"#BD3039",accent:"#0D2B56",espn:"baseball/mlb",id:2},
+  {name:"Chicago Cubs",          sport:"MLB",emoji:"⚾",color:"#0E3386",accent:"#CC3433",espn:"baseball/mlb",id:16},
+  {name:"Chicago White Sox",     sport:"MLB",emoji:"⚾",color:"#27251F",accent:"#C4CED4",espn:"baseball/mlb",id:4},
+  {name:"Cincinnati Reds",       sport:"MLB",emoji:"⚾",color:"#C6011F",accent:"#000000",espn:"baseball/mlb",id:17},
+  {name:"Cleveland Guardians",   sport:"MLB",emoji:"⚾",color:"#00385D",accent:"#E50022",espn:"baseball/mlb",id:5},
+  {name:"Colorado Rockies",      sport:"MLB",emoji:"⚾",color:"#33006F",accent:"#C4CED4",espn:"baseball/mlb",id:27},
+  {name:"Detroit Tigers",        sport:"MLB",emoji:"⚾",color:"#0C2340",accent:"#FA4616",espn:"baseball/mlb",id:6},
+  {name:"Houston Astros",        sport:"MLB",emoji:"⚾",color:"#002D62",accent:"#EB6E1F",espn:"baseball/mlb",id:18},
+  {name:"Kansas City Royals",    sport:"MLB",emoji:"⚾",color:"#004687",accent:"#C09A5B",espn:"baseball/mlb",id:7},
+  {name:"Los Angeles Angels",    sport:"MLB",emoji:"⚾",color:"#BA0021",accent:"#003263",espn:"baseball/mlb",id:3},
+  {name:"Los Angeles Dodgers",   sport:"MLB",emoji:"⚾",color:"#005A9C",accent:"#EF3E42",espn:"baseball/mlb",id:19},
+  {name:"Miami Marlins",         sport:"MLB",emoji:"⚾",color:"#00A3E0",accent:"#EF3340",espn:"baseball/mlb",id:28},
+  {name:"Milwaukee Brewers",     sport:"MLB",emoji:"⚾",color:"#FFC52F",accent:"#12284B",espn:"baseball/mlb",id:8},
+  {name:"Minnesota Twins",       sport:"MLB",emoji:"⚾",color:"#002B5C",accent:"#D31145",espn:"baseball/mlb",id:9},
+  {name:"New York Mets",         sport:"MLB",emoji:"⚾",color:"#002D72",accent:"#FF5910",espn:"baseball/mlb",id:21},
+  {name:"New York Yankees",      sport:"MLB",emoji:"⚾",color:"#003087",accent:"#C4CED4",espn:"baseball/mlb",id:10},
+  {name:"Oakland Athletics",     sport:"MLB",emoji:"⚾",color:"#003831",accent:"#EFB21E",espn:"baseball/mlb",id:11},
+  {name:"Philadelphia Phillies", sport:"MLB",emoji:"⚾",color:"#E81828",accent:"#002D72",espn:"baseball/mlb",id:22},
+  {name:"Pittsburgh Pirates",    sport:"MLB",emoji:"⚾",color:"#27251F",accent:"#FDB827",espn:"baseball/mlb",id:23},
+  {name:"San Diego Padres",      sport:"MLB",emoji:"⚾",color:"#2F241D",accent:"#FFC425",espn:"baseball/mlb",id:25},
+  {name:"San Francisco Giants",  sport:"MLB",emoji:"⚾",color:"#FD5A1E",accent:"#27251F",espn:"baseball/mlb",id:26},
+  {name:"Seattle Mariners",      sport:"MLB",emoji:"⚾",color:"#0C2C56",accent:"#005C5C",espn:"baseball/mlb",id:12},
+  {name:"St. Louis Cardinals",   sport:"MLB",emoji:"⚾",color:"#C41E3A",accent:"#FEDB00",espn:"baseball/mlb",id:24},
+  {name:"Tampa Bay Rays",        sport:"MLB",emoji:"⚾",color:"#092C5C",accent:"#8FBCE6",espn:"baseball/mlb",id:30},
+  {name:"Texas Rangers",         sport:"MLB",emoji:"⚾",color:"#003278",accent:"#C0111F",espn:"baseball/mlb",id:13},
+  {name:"Toronto Blue Jays",     sport:"MLB",emoji:"⚾",color:"#134A8E",accent:"#1D2D5C",espn:"baseball/mlb",id:14},
+  {name:"Washington Nationals",  sport:"MLB",emoji:"⚾",color:"#AB0003",accent:"#14225A",espn:"baseball/mlb",id:20},
+  // NBA
+  {name:"Atlanta Hawks",         sport:"NBA",emoji:"🏀",color:"#C1D32F",accent:"#E03A3E",espn:"basketball/nba",id:1},
+  {name:"Boston Celtics",        sport:"NBA",emoji:"🏀",color:"#007A33",accent:"#BA9653",espn:"basketball/nba",id:2},
+  {name:"Brooklyn Nets",         sport:"NBA",emoji:"🏀",color:"#000000",accent:"#FFFFFF",espn:"basketball/nba",id:17},
+  {name:"Charlotte Hornets",     sport:"NBA",emoji:"🏀",color:"#1D1160",accent:"#00788C",espn:"basketball/nba",id:30},
+  {name:"Chicago Bulls",         sport:"NBA",emoji:"🏀",color:"#CE1141",accent:"#000000",espn:"basketball/nba",id:4},
+  {name:"Cleveland Cavaliers",   sport:"NBA",emoji:"🏀",color:"#860038",accent:"#FDBB30",espn:"basketball/nba",id:5},
+  {name:"Dallas Mavericks",      sport:"NBA",emoji:"🏀",color:"#00538C",accent:"#002B5E",espn:"basketball/nba",id:6},
+  {name:"Denver Nuggets",        sport:"NBA",emoji:"🏀",color:"#0E2240",accent:"#FEC524",espn:"basketball/nba",id:7},
+  {name:"Detroit Pistons",       sport:"NBA",emoji:"🏀",color:"#C8102E",accent:"#006BB6",espn:"basketball/nba",id:8},
+  {name:"Golden State Warriors", sport:"NBA",emoji:"🏀",color:"#1D428A",accent:"#FFC72C",espn:"basketball/nba",id:9},
+  {name:"Houston Rockets",       sport:"NBA",emoji:"🏀",color:"#CE1141",accent:"#C4CED4",espn:"basketball/nba",id:10},
+  {name:"Indiana Pacers",        sport:"NBA",emoji:"🏀",color:"#002D62",accent:"#FDBB30",espn:"basketball/nba",id:11},
+  {name:"Los Angeles Clippers",  sport:"NBA",emoji:"🏀",color:"#C8102E",accent:"#1D428A",espn:"basketball/nba",id:12},
+  {name:"Los Angeles Lakers",    sport:"NBA",emoji:"🏀",color:"#552583",accent:"#FDB927",espn:"basketball/nba",id:13},
+  {name:"Memphis Grizzlies",     sport:"NBA",emoji:"🏀",color:"#5D76A9",accent:"#12173F",espn:"basketball/nba",id:29},
+  {name:"Miami Heat",            sport:"NBA",emoji:"🏀",color:"#98002E",accent:"#F9A01B",espn:"basketball/nba",id:14},
+  {name:"Milwaukee Bucks",       sport:"NBA",emoji:"🏀",color:"#00471B",accent:"#EEE1C6",espn:"basketball/nba",id:15},
+  {name:"Minnesota Timberwolves",sport:"NBA",emoji:"🏀",color:"#0C2340",accent:"#236192",espn:"basketball/nba",id:16},
+  {name:"New Orleans Pelicans",  sport:"NBA",emoji:"🏀",color:"#0C2340",accent:"#C8102E",espn:"basketball/nba",id:3},
+  {name:"New York Knicks",       sport:"NBA",emoji:"🏀",color:"#006BB6",accent:"#F58426",espn:"basketball/nba",id:18},
+  {name:"Oklahoma City Thunder", sport:"NBA",emoji:"🏀",color:"#007AC1",accent:"#EF3B24",espn:"basketball/nba",id:25},
+  {name:"Orlando Magic",         sport:"NBA",emoji:"🏀",color:"#0077C0",accent:"#C4CED4",espn:"basketball/nba",id:19},
+  {name:"Philadelphia 76ers",    sport:"NBA",emoji:"🏀",color:"#006BB6",accent:"#ED174C",espn:"basketball/nba",id:20},
+  {name:"Phoenix Suns",          sport:"NBA",emoji:"🏀",color:"#1D1160",accent:"#E56020",espn:"basketball/nba",id:21},
+  {name:"Portland Trail Blazers",sport:"NBA",emoji:"🏀",color:"#E03A3E",accent:"#000000",espn:"basketball/nba",id:22},
+  {name:"Sacramento Kings",      sport:"NBA",emoji:"🏀",color:"#5A2D81",accent:"#63727A",espn:"basketball/nba",id:23},
+  {name:"San Antonio Spurs",     sport:"NBA",emoji:"🏀",color:"#C4CED4",accent:"#000000",espn:"basketball/nba",id:24},
+  {name:"Toronto Raptors",       sport:"NBA",emoji:"🏀",color:"#CE1141",accent:"#000000",espn:"basketball/nba",id:28},
+  {name:"Utah Jazz",             sport:"NBA",emoji:"🏀",color:"#002B5C",accent:"#00471B",espn:"basketball/nba",id:26},
+  {name:"Washington Wizards",    sport:"NBA",emoji:"🏀",color:"#002B5C",accent:"#E31837",espn:"basketball/nba",id:27},
+  // NHL
+  {name:"Vegas Golden Knights",  sport:"NHL",emoji:"🏒",color:"#B4975A",accent:"#C8A84B",espn:"hockey/nhl",id:29},
+  {name:"Carolina Hurricanes",   sport:"NHL",emoji:"🏒",color:"#CC0000",accent:"#A2AAAD",espn:"hockey/nhl",id:12},
+  {name:"Colorado Avalanche",    sport:"NHL",emoji:"🏒",color:"#6F263D",accent:"#236192",espn:"hockey/nhl",id:21},
+  {name:"Edmonton Oilers",       sport:"NHL",emoji:"🏒",color:"#FF4C00",accent:"#FFB81C",espn:"hockey/nhl",id:22},
+  {name:"Florida Panthers",      sport:"NHL",emoji:"🏒",color:"#041E42",accent:"#C8102E",espn:"hockey/nhl",id:13},
+  // Soccer
+  {name:"Arsenal",               sport:"Soccer",emoji:"⚽",color:"#EF0107",accent:"#9C824A",espn:"soccer/eng.1",id:359},
+  {name:"Manchester City",       sport:"Soccer",emoji:"⚽",color:"#6CABDD",accent:"#98C5E9",espn:"soccer/eng.1",id:382},
+  {name:"Real Madrid",           sport:"Soccer",emoji:"⚽",color:"#00529F",accent:"#FEBE10",espn:"soccer/esp.1",id:86},
+  {name:"Inter Miami",           sport:"MLS",   emoji:"⚽",color:"#F7B5CD",accent:"#F7B5CD",espn:"soccer/usa.1",id:20232},
+];
+
+const STATIC={
+  "Arizona Cardinals":{hotTake:"The Cardinals drafted QB Fernando Mendoza No. 1 overall — the rebuild is complete.",keyFact:"Arizona has the league's youngest roster heading into 2026 — they're built for the next 5 years."},
+  "Atlanta Falcons":{hotTake:"The Falcons have one of the easiest schedules in 2026. This is their year.",keyFact:"Atlanta had the 4th easiest schedule in the NFL in 2026 based on opponent win percentage."},
+  "Baltimore Ravens":{hotTake:"Lamar Jackson is still the most dangerous dual-threat QB alive — new coach, same MVP.",keyFact:"New HC Zach Orr said the coaching change felt like 'a breath of fresh air' to Lamar Jackson."},
+  "Buffalo Bills":{hotTake:"Josh Allen is the most electric QB in football. Buffalo is one piece away every year.",keyFact:"The Bills have had 7 consecutive winning seasons — one of the most consistent programs in the NFL."},
+  "Carolina Panthers":{hotTake:"Carolina is building something real — young roster, good coaching, long runway.",keyFact:"The Panthers are committed to building around their young core entering 2026."},
+  "Chicago Bears":{hotTake:"The Bears have the hardest schedule in the NFL in 2026. That's how you know everyone respects them.",keyFact:"Chicago has the toughest schedule in 2026 (.550 opp win pct) — a sign the league takes them seriously."},
+  "Cincinnati Bengals":{hotTake:"Joe Burrow is healthy and the Bengals are one of the most talented rosters in the AFC.",keyFact:"The Bengals have the 3rd easiest schedule in 2026 — perfect for a bounce-back year with Burrow healthy."},
+  "Cleveland Browns":{hotTake:"The Browns have the easiest schedule in all of football in 2026. Get ready.",keyFact:"Cleveland has the #1 easiest schedule in the NFL in 2026 (.429 opp win pct)."},
+  "Dallas Cowboys":{hotTake:"CeeDee Lamb is a top-3 receiver. Once they fix QB, this roster is terrifying.",keyFact:"America's Team is worth $9B+ — the most valuable franchise on earth. Last Super Bowl: 1996."},
+  "Denver Broncos":{hotTake:"Denver's defense is elite and they just upset Buffalo in OT in the Divisional round.",keyFact:"Denver beat Buffalo 33-30 in OT in the 2025 Divisional round — their biggest playoff win in years."},
+  "Detroit Lions":{hotTake:"Detroit went 15-2 in 2024. One down year doesn't erase what Dan Campbell built.",keyFact:"The Lions went 0-16 in 2008. Their rise to annual contender is the greatest NFL turnaround ever."},
+  "Green Bay Packers":{hotTake:"Jordan Love is in his prime and the Packers are back as an NFC contender.",keyFact:"The Packers have had a winning QB for 35 consecutive years: Favre → Rodgers → Love."},
+  "Houston Texans":{hotTake:"CJ Stroud is one of the best young QBs in football and the Texans are an AFC contender.",keyFact:"Houston went from 3-13-1 in 2022 to the playoffs in 2023 — one of the fastest turnarounds in NFL history."},
+  "Indianapolis Colts":{hotTake:"The Colts have the pieces to make a playoff push in 2026 — don't sleep on them.",keyFact:"Indianapolis won Super Bowl XLI in 2007 and has been building back toward that level ever since."},
+  "Jacksonville Jaguars":{hotTake:"Trevor Lawrence is ready for a bounce-back year and the AFC South is wide open.",keyFact:"The Jaguars went 9-8 to win the AFC South in 2022 after going 3-14 the prior year."},
+  "Kansas City Chiefs":{hotTake:"One healthy offseason and Mahomes reminds the league why he's the GOAT.",keyFact:"Mahomes is rehabbing a knee injury from 2025. The revenge tour starts September 2026."},
+  "Las Vegas Raiders":{hotTake:"The Raiders drafted QB Fernando Mendoza No. 1 overall — the rebuild officially starts now.",keyFact:"Fernando Mendoza was taken No. 1 by Las Vegas after leading Indiana to the 2025-26 national title."},
+  "Los Angeles Chargers":{hotTake:"Justin Herbert is one of the most talented QBs in the game — the Chargers are always dangerous.",keyFact:"The Chargers have never won a Super Bowl — but Herbert is the best QB they've ever had."},
+  "Los Angeles Rams":{hotTake:"The Rams acquired Chiefs CB Trent McDuffie for 4 draft picks — they are building for now.",keyFact:"LA traded 4 picks to KC for Trent McDuffie — the biggest defensive trade of the 2026 offseason."},
+  "Miami Dolphins":{hotTake:"Tua Tagovailoa healthy is one of the most efficient QBs in football. Miami is dangerous.",keyFact:"The Dolphins lead the NFL in points per game over the last 2 full seasons when Tua is healthy."},
+  "Minnesota Vikings":{hotTake:"The Vikings have one of the most complete rosters in the NFC — don't sleep on them.",keyFact:"Minnesota has been linked to edge rusher Jonathan Greenard this offseason to bolster their pass rush."},
+  "New England Patriots":{hotTake:"Drake Maye is the future and the Patriots are rebuilding the right way.",keyFact:"New England opens 2026 at Seattle — a rematch of Super Bowl LX won by the Seahawks."},
+  "New Orleans Saints":{hotTake:"The Saints have the 2nd easiest schedule in the NFL — they could sneak into the playoffs.",keyFact:"New Orleans has the 2nd easiest schedule in 2026 — a gift for a team looking to reload."},
+  "New York Giants":{hotTake:"The Giants just signed Odell Beckham Jr. — the prodigal son returns to where it all started.",keyFact:"OBJ met with new Giants HC John Harbaugh at the owners meetings and a reunion deal followed — one of the best storylines of the 2026 offseason."},
+  "New York Jets":{hotTake:"The Jets finally have stability and a real QB — it's only a matter of time.",keyFact:"The Jets haven't made the playoffs since 2010 — the longest active drought in the AFC."},
+  "Philadelphia Eagles":{hotTake:"The Eagles won the Super Bowl by 18 points. They are the standard until proven otherwise.",keyFact:"DeJean and Mitchell were BOTH 1st-team All-Pro CBs in 2025 — the first such duo since 2003."},
+  "Pittsburgh Steelers":{hotTake:"The Steelers drafted QB Drew Allar in 2026 — the Rooney family always finds a way.",keyFact:"Pittsburgh is the only NFL franchise to win 6 Super Bowls. They drafted their QB of the future in 2026."},
+  "San Francisco 49ers":{hotTake:"Shanahan's offense is unstoppable when healthy — they beat the defending Eagles in the Wild Card.",keyFact:"Brock Purdy was Mr. Irrelevant (last pick, 2022 draft) and is now one of the best QBs in football."},
+  "Seattle Seahawks":{hotTake:"The Seahawks are the reigning Super Bowl LX champions. Your team wishes.",keyFact:"Seattle won Super Bowl LX and opens 2026 as defending champions — hosting the Patriots on a Wednesday."},
+  "Tampa Bay Buccaneers":{hotTake:"Baker Mayfield has reinvented himself in Tampa Bay and the Bucs are always dangerous.",keyFact:"Tampa Bay won Super Bowl LV in 2021 with Tom Brady and have remained competitive ever since."},
+  "Tennessee Titans":{hotTake:"Tennessee took QB Cam Ward and is in full rebuild mode — the future looks bright.",keyFact:"The Titans selected QB Cam Ward — coach confirmed his shoulder is 'perfectly healthy' for 2026."},
+  "Washington Commanders":{hotTake:"Jayden Daniels is the most exciting young QB in the NFC — Washington is for real.",keyFact:"Washington went from 4-13 in 2023 to the NFC Championship Game in one year — fastest rise in NFL history."},
+  "Arizona Diamondbacks":{hotTake:"The Diamondbacks made the World Series in 2023 and have young talent ready for another run.",keyFact:"Arizona shocked baseball by reaching the 2023 World Series as a wild card team."},
+  "Atlanta Braves":{hotTake:"Atlanta leads MLB in RBI and hits through May. Acuna is healthy. This is their year.",keyFact:"The Braves won the 2021 World Series as a wild card after being 10 games under .500 in August."},
+  "Baltimore Orioles":{hotTake:"The Orioles have one of the best farm systems in baseball — the window is fully open.",keyFact:"Pete Alonso signed with Baltimore in 2026 after 7 years with the Mets — 268 career home runs."},
+  "Boston Red Sox":{hotTake:"Fenway Park is the most iconic stadium in baseball. The Sox will always be worth riding.",keyFact:"The Red Sox ended an 86-year World Series drought in 2004 — the most celebrated title in baseball history."},
+  "Chicago Cubs":{hotTake:"The Cubs ended a 108-year World Series drought in 2016. The window is always open at Wrigley.",keyFact:"Wrigley Field opened in 1914 and is the second-oldest MLB stadium — a bucket list destination."},
+  "Chicago White Sox":{hotTake:"The White Sox are rebuilding — but their young core could surprise everyone by 2027.",keyFact:"Chicago's rebuild is one of the most anticipated in baseball — their 2026 draft class was elite."},
+  "Cincinnati Reds":{hotTake:"The Reds have elite young pitching and are quietly building toward contention.",keyFact:"Cincinnati's rotation is one of the youngest and most talented in the NL entering 2026."},
+  "Cleveland Guardians":{hotTake:"The Guardians always find a way to compete with a fraction of the budget. Never count them out.",keyFact:"Cleveland made the ALCS in 2022 despite one of the lowest payrolls in baseball — efficiency at its finest."},
+  "Colorado Rockies":{hotTake:"Coors Field gives every hitter a stat line worth showing off. Every game is an adventure.",keyFact:"Coors Field has the highest elevation of any MLB ballpark — balls travel 9% farther due to altitude."},
+  "Detroit Tigers":{hotTake:"Detroit is quietly building one of the best rotations in the AL — they'll sneak up on everyone.",keyFact:"The Tigers have two of the best young hitters in baseball entering 2026 in their farm system."},
+  "Houston Astros":{hotTake:"Houston is 8 games under .500 but Yordan Alvarez makes them dangerous every night.",keyFact:"The Astros made 6 consecutive ALCSs from 2017-2022 — the most dominant run by any team in that era."},
+  "Kansas City Royals":{hotTake:"Kansas City is building again — watch out for the Royals to make noise in the AL Central.",keyFact:"The Royals won the 2015 World Series and are patiently rebuilding toward their next contention window."},
+  "Los Angeles Angels":{hotTake:"Mike Trout is the best player of his generation and he deserves better than what's around him.",keyFact:"Mike Trout has 3 MVPs and has never made it past the ALDS — the greatest player on the worst playoff team."},
+  "Los Angeles Dodgers":{hotTake:"Back-to-back World Series champs, best ERA in MLB, and Ohtani batting .310. It's not close.",keyFact:"Ohtani hit 54 HR + stole 59 bases in 2024 — the first 50/50 season in MLB history."},
+  "Miami Marlins":{hotTake:"The Marlins have top-end pitching and are closer to contention than their record suggests.",keyFact:"Miami has won 2 World Series (1997, 2003) and dismantled both rosters — the most unique dynasty in sports."},
+  "Milwaukee Brewers":{hotTake:"The Brewers punch above their weight class every year. Don't count them out in October.",keyFact:"Milwaukee has made the playoffs 5 times since 2018 on one of the smallest payrolls in baseball."},
+  "Minnesota Twins":{hotTake:"The Twins have one of the most exciting young cores in the AL Central — the window is opening.",keyFact:"Minnesota hit an MLB record 307 home runs in 2019 — a single-season record that still stands."},
+  "New York Mets":{hotTake:"The 2024 Mets started 22-33 and made the playoffs. Same record, same month. History can repeat.",keyFact:"Juan Soto's $765M contract is the largest in sports history. Owner Steve Cohen is all-in."},
+  "New York Yankees":{hotTake:"The Yankees lead MLB in home runs (83) and Judge is the most feared hitter in baseball.",keyFact:"27 World Series titles — more than any franchise in professional sports history."},
+  "Oakland Athletics":{hotTake:"The A's are starting fresh in their new home — a new era begins.",keyFact:"Moneyball made Oakland famous worldwide — Billy Beane's 2002 team went on a 20-game winning streak."},
+  "Philadelphia Phillies":{hotTake:"Trea Turner and Bryce Harper give Philly one of the most dangerous lineups in baseball.",keyFact:"The Phillies reached back-to-back World Series in 2022 and 2023 — the most exciting run in Philly sports in years."},
+  "Pittsburgh Pirates":{hotTake:"Pittsburgh's young core is one of the most exciting in the NL — the rebuild is paying off.",keyFact:"PNC Park is consistently rated the most beautiful ballpark in baseball — worth a visit for that alone."},
+  "San Diego Padres":{hotTake:"San Diego has one of the most talented rosters in the NL — they're always a dark horse.",keyFact:"The Padres spent over $5B on player salaries over 2022-2026 to build a championship-caliber roster."},
+  "San Francisco Giants":{hotTake:"Oracle Park is the most beautiful stadium in baseball and the Giants always find a way.",keyFact:"San Francisco won 3 World Series in 5 years (2010, 2012, 2014) — one of the great dynasties of the modern era."},
+  "Seattle Mariners":{hotTake:"Julio Rodriguez is a superstar in the making and Seattle has the most loyal fanbase in baseball.",keyFact:"The Mariners hold the MLB record for most wins in a season (116, 2001) — and never made the World Series."},
+  "St. Louis Cardinals":{hotTake:"St. Louis is the most passionate baseball city in America. The Cardinals are always relevant.",keyFact:"The Cardinals have won 11 World Series titles — 2nd most in MLB history behind only the Yankees."},
+  "Tampa Bay Rays":{hotTake:"The Rays win with one of the smallest payrolls in baseball — they always find a way.",keyFact:"Tampa Bay has the best winning percentage in the AL since 2008 despite consistently ranking last in payroll."},
+  "Texas Rangers":{hotTake:"Texas won the 2023 World Series and are defending their status as AL contenders.",keyFact:"The Rangers won their first World Series in 2023 — 63 years after the franchise was founded."},
+  "Toronto Blue Jays":{hotTake:"Toronto reached the 2025 World Series — they are legitimate AL contenders.",keyFact:"The Blue Jays lost the 2025 World Series to LA 4-3 — their first Fall Classic appearance since 1993."},
+  "Washington Nationals":{hotTake:"Washington won a World Series in 2019 — and they're quietly building toward another run.",keyFact:"Juan Soto grew up as a National before becoming baseball's highest-paid player — the best story in the sport."},
+  "Atlanta Hawks":{hotTake:"Trae Young is one of the most watchable players in the NBA — the Hawks are always entertaining.",keyFact:"Trae Young is one of only 3 players in NBA history to lead the league in both scoring and assists."},
+  "Boston Celtics":{hotTake:"Boston lost a shocking upset — but Tatum is healthy and the Celtics will be back.",keyFact:"The Celtics won their 18th championship in 2024 — the most titles in NBA history."},
+  "Brooklyn Nets":{hotTake:"Brooklyn's rebuild is underway — they have a treasure chest of draft picks to build with.",keyFact:"The Nets have accumulated more future first-round picks than any other NBA team through 2028."},
+  "Charlotte Hornets":{hotTake:"LaMelo Ball is one of the most creative passers in a generation — Charlotte is always entertaining.",keyFact:"LaMelo Ball won Rookie of the Year in 2021 and has been one of the NBA's most entertaining players since."},
+  "Chicago Bulls":{hotTake:"The Bulls are rebuilding in one of the best basketball cities in the world.",keyFact:"The Bulls dynasty (1991-98) — 6 championships in 8 years — is the greatest team run in NBA history."},
+  "Cleveland Cavaliers":{hotTake:"The Cavs beat Detroit and Toronto in Game 7s. They were swept by the Knicks. Still a run.",keyFact:"Kenny Atkinson is staying. Evan Mobley is untouchable. Mitchell extension talks are coming this summer."},
+  "Dallas Mavericks":{hotTake:"Luka Doncic is the best player in basketball when healthy and Dallas is always a threat.",keyFact:"Luka averaged a triple-double (33/9/10) in the 2024 NBA Finals — the best Finals since MJ in 1996."},
+  "Denver Nuggets":{hotTake:"Nikola Jokic is the best passing big man in NBA history and Denver is always dangerous.",keyFact:"Jokic has won 3 MVPs in 5 years and a championship in 2023 — the greatest center of his generation."},
+  "Detroit Pistons":{hotTake:"Detroit is one of the most exciting young teams in the NBA — the future is bright.",keyFact:"Cade Cunningham averaged 35.1 pts/100 poss in the 2026 playoffs — one of the best young scorers alive."},
+  "Golden State Warriors":{hotTake:"One more healthy Curry season and this team reminds everyone why they were a dynasty.",keyFact:"The Warriors won 4 championships in 8 years (2015-2022) — the most dominant run since the 1990s Bulls."},
+  "Houston Rockets":{hotTake:"Houston is building one of the most exciting young rosters in basketball — watch this space.",keyFact:"The Rockets have two top-10 draft picks from the last 3 years — the foundation of something special."},
+  "Indiana Pacers":{hotTake:"Tyrese Haliburton is one of the most entertaining players in the NBA — Indy is always fun.",keyFact:"The Pacers eliminated Cleveland in Round 1 of the 2025 playoffs — one of the biggest upsets that postseason."},
+  "Los Angeles Clippers":{hotTake:"The Clippers are always dangerous in the playoffs — Kawhi Leonard is elite when healthy.",keyFact:"The Clippers have never appeared in an NBA Finals — making their pursuit one of basketball's great stories."},
+  "Los Angeles Lakers":{hotTake:"LeBron is 41 and just pushed OKC to 6 games. That is simply not normal.",keyFact:"LeBron is the all-time NBA scoring leader with 40,000+ points. He is weighing retirement this summer."},
+  "Memphis Grizzlies":{hotTake:"Ja Morant is appointment television — Memphis will always attract fans with his highlights.",keyFact:"Ja Morant is one of the most electrifying athletes in any sport — his 2022 playoffs run was legendary."},
+  "Miami Heat":{hotTake:"Lost a Play-In game in OT by 1 point. That is not a bad team. One piece away.",keyFact:"Spoelstra has turned rosters no one believed in into Finals contenders twice. Never count Miami out."},
+  "Milwaukee Bucks":{hotTake:"Giannis is still one of the 3 best players in basketball — the Bucks are always dangerous.",keyFact:"Giannis is being shopped this summer after Milwaukee's playoff exit — the biggest trade rumor in the NBA."},
+  "Minnesota Timberwolves":{hotTake:"Anthony Edwards is the next face of the NBA and Minnesota has the talent to go deep.",keyFact:"Anthony Edwards averaged 32 PPG in the 2025-26 playoffs — one of the best young players in the game."},
+  "New Orleans Pelicans":{hotTake:"Zion Williamson is one of the most physically gifted players in history when healthy.",keyFact:"Zion is 25 and has missed more games than he's played — the NBA's biggest what-if."},
+  "New York Knicks":{hotTake:"Brunson averaged 27.8 PPG in 13 playoff games. The Knicks are in the Finals for the first time since 1999.",keyFact:"Mitchell Robinson is playing the NBA Finals with a broken right pinky — wearing a brace in Game 1."},
+  "Oklahoma City Thunder":{hotTake:"SGA is the best scorer alive and OKC is one win from back-to-back Finals. Game 7 is tomorrow.",keyFact:"OKC started 24-1 this season — tying the 2015-16 Warriors for the best 25-game start in NBA history."},
+  "Orlando Magic":{hotTake:"Paolo Banchero is a top-10 player at 23 — the Magic are ahead of schedule.",keyFact:"Banchero averaged 33.9 pts/100 poss in the 2026 playoffs — one of the best young stars in the game."},
+  "Philadelphia 76ers":{hotTake:"The 76ers just upset the defending champion Celtics in Round 1 — don't sleep on Philly.",keyFact:"VJ Edgecombe scored 30 pts through injury to beat Boston in Game 2 — instant legend status."},
+  "Phoenix Suns":{hotTake:"The Suns have one of the most talented rosters in the West when everyone is healthy.",keyFact:"Phoenix reached the NBA Finals in 2021 for the first time since 1993 — their best run in a generation."},
+  "Portland Trail Blazers":{hotTake:"Portland is rebuilding with Scoot Henderson — one of the most exciting young PGs in years.",keyFact:"Damian Lillard's departure to Milwaukee ended a 10-year era — Portland is starting fresh."},
+  "Sacramento Kings":{hotTake:"Sacramento finally broke its 16-year playoff drought in 2023 — and De'Aaron Fox is elite.",keyFact:"The Kings ended the longest playoff drought in NBA history when they qualified in 2023."},
+  "San Antonio Spurs":{hotTake:"Wembanyama averaged 28.4 PPG in the West Finals — one of the best playoff runs by a sophomore ever.",keyFact:"Victor Wembanyama is the most unique player in basketball history — San Antonio built around him wisely."},
+  "Toronto Raptors":{hotTake:"Toronto is the only franchise outside the US to win an NBA championship — and they'll be back.",keyFact:"The Raptors won the 2019 championship against the Warriors — the only non-US team in NBA history to win."},
+  "Utah Jazz":{hotTake:"Utah is building patiently with draft picks — the Lauri Markkanen era is just beginning.",keyFact:"The Jazz won 50+ games every year from 1987-2011 — one of the most consistent franchises in NBA history."},
+  "Washington Wizards":{hotTake:"Washington is rebuilding around young talent — the future is more exciting than the present.",keyFact:"The Wizards (then Bullets) won the 1978 NBA championship — their only title in franchise history."},
+  "Vegas Golden Knights":{hotTake:"Vegas fired their coach mid-season, swept the Presidents' Trophy winners, and are in the Cup Final.",keyFact:"Vegas reached the Cup Final in their very first season (2017-18) — the greatest expansion debut in pro sports history."},
+  "Carolina Hurricanes":{hotTake:"Carolina eliminated Montreal and faces Vegas in the Stanley Cup Final starting Tuesday.",keyFact:"The Hurricanes have made the playoffs 8 straight years — one of the great coaching runs in NHL history."},
+  "Colorado Avalanche":{hotTake:"MacKinnon had 127 points and +57. He's the best player in hockey. The window is still open.",keyFact:"MacKinnon's 97 even-strength points in 2025-26 are the most since Wayne Gretzky in 1990-91."},
+  "Edmonton Oilers":{hotTake:"McDavid led the NHL with 138 points and was upset by Anaheim. The most unfair thing in hockey.",keyFact:"Connor McDavid has led the NHL in scoring 6 times — a feat only Wayne Gretzky achieved more often."},
+  "Florida Panthers":{hotTake:"Back-to-back Stanley Cup champions who missed the playoffs. Every dynasty has a down year.",keyFact:"Florida won consecutive Cups in 2024 and 2025 — the first back-to-back champs since Pittsburgh in 2017."},
+  "Arsenal":{hotTake:"Arsenal won the Premier League for the first time since 2004. They are in their prime.",keyFact:"Saka won the PFA Players' Player of the Year award — 17 goals and 16 assists in Arsenal's title season."},
+  "Manchester City":{hotTake:"Haaland scored 35 goals and Guardiola won the EFL Cup. Pep never stops winning trophies.",keyFact:"Guardiola won his 5th League Cup — more than any manager in the competition's history."},
+  "Real Madrid":{hotTake:"Real Madrid demolished Man City 5-1 in the Champions League. They are always dangerous.",keyFact:"Real Madrid have won 15 UEFA Champions League titles — more than any other club by a wide margin."},
+  "Inter Miami":{hotTake:"Messi won the MLS Cup, back-to-back MVPs, and the Golden Boot. Watch the GOAT while you can.",keyFact:"Messi's 15 playoff goal contributions in 2025 set the all-time MLS postseason record."},
+};
+
+const SPORTS=["ALL","NFL","MLB","NBA","NHL","Soccer","MLS"];
+const tips=[
+  {category:"The Lingo",icon:"🗣️",tips:['Always say "WE" never "they."','Drop "analytics" into any conversation.','First name only — not "Mahomes," just "Patrick."','Say "I called it" whenever anything happens.','Use "historically speaking" before making something up.']},
+  {category:"The Wardrobe",icon:"👕",tips:["Buy the current superstar's number. No throwbacks.","Keep tags on — return if they start losing.","Never wear a jersey in an away city.","Sunglasses inside the arena = seasoned fan energy.",'"I\'ve had this shirt for years" works for yesterday.']},
+  {category:"The History",icon:"📚",tips:["Memorize ONE legendary past player. Drop it confidently.","Blame injuries for any loss before 2020.",'"I grew up watching them" is valid for any age.',"Know the year of one championship. Just one.",'If challenged: "I don\'t live in the past. I focus on NOW."']},
+  {category:"Game Day",icon:"📺",tips:["Check the score at halftime. React accordingly.","Text only when winning. Radio silence when losing.","Boo the refs. Always. Non-specific ref hatred = authentic.","Look pained during commercials. You had plans.","Never admit you don't know a penalty call. Just nod gravely."]},
+  {category:"Social Media",icon:"📱",tips:["Post only W tweets. Delete L tweets before morning.","Add team emoji to your display name mid-playoffs.","Repost highlights with zero personal commentary.",'"Been saying this all season" on any good thing.',"Unfollow in the offseason. Refollow in October."]},
+  {category:"The Exit Strategy",icon:"🚪",tips:['Start saying "the team" around Week 10 of a bad season.',"Pivot to \"I'm a fan of GOOD BASKETBALL\" — classy.","Blame the coach. Always safe.",'"They need a culture change" buys 2-3 weeks.',"Quietly begin wearing neutral-colored clothing."]},
+];
+const quiz=[
+  {q:"Your team just made the playoffs. You:",options:["Post a throwback from the dark years","Buy a jersey and stream the opener","Tweet 'Been waiting for this moment'","All of the above, in order"],bandwagon:[false,true,true,true]},
+  {q:"Someone asks how long you've been a fan:",options:['"My whole life"','"Since the dynasty"','"I appreciate good ball"','"Since [star] came up"'],bandwagon:[false,false,true,true]},
+  {q:"4th quarter, down by 14. You:",options:["Stay and watch","Say 'Hard to watch' and open Twitter","Start looking up next week's schedule","Leave to beat traffic"],bandwagon:[false,false,true,true]},
+  {q:"A true fan challenges your knowledge. You:",options:["Engage respectfully","Say 'I don't owe you a quiz'","Deflect: 'Stats don't measure heart'","Block and mute"],bandwagon:[false,true,true,true]},
+];
+
+// ── ESPN helpers ──
+function parseRecord(t){const items=t?.record?.items||[];for(const i of items){if(i.summary)return i.summary;}return null;}
+function parseCoach(t){for(const c of(t?.coaches||[])){const n=c?.coach?.fullName||c?.fullName||c?.displayName;if(n&&!n.includes("undefined"))return n;}return null;}
+function parseGame(sb,tid){
+  for(const ev of(sb?.events||[])){
+    const comp=ev.competitions?.[0];if(!comp)continue;
+    const involved=comp.competitors?.some(c=>String(c.team?.id)===String(tid));if(!involved)continue;
+    const[c1,c2]=comp.competitors;
+    const status=ev.status?.type?.description||"";
+    const n1=c1?.team?.shortDisplayName||"?",n2=c2?.team?.shortDisplayName||"?";
+    const isFinal=status.toLowerCase().includes("final"),isLive=status.toLowerCase().includes("progress");
+    if(isFinal)return`${n1} ${c1.score} – ${n2} ${c2.score} · Final`;
+    if(isLive)return`🔴 LIVE: ${n1} ${c1.score} – ${n2} ${c2.score}`;
+    const date=ev.date?new Date(ev.date).toLocaleDateString("en-US",{month:"short",day:"numeric"}):"";
+    return`Next: ${n1} vs ${n2} · ${date}`;
+  }return null;
+}
+function parseTeamStats(statsData) {
+  // ESPN /teams/:id/statistics returns:
+  // { splits: { categories: [ { name, stats: [ { name, displayName, displayValue, athlete: { displayName, position, jersey } } ] } ] } }
+  // OR: { results: { stats: { splits: { categories: [...] } } } }
+  const categories =
+    statsData?.splits?.categories ||
+    statsData?.results?.splits?.categories ||
+    statsData?.statistics?.splits?.categories ||
+    statsData?.categories ||
+    [];
+
+  const playerMap = {};
+
+  for (const cat of categories) {
+    const catName = cat.shortDisplayName || cat.displayName || cat.name || "";
+    for (const stat of (cat.stats || cat.leaders || [])) {
+      const athlete = stat.athlete || stat.player;
+      if (!athlete?.displayName) continue;
+      const name = athlete.displayName;
+      if (!playerMap[name]) {
+        playerMap[name] = {
+          name,
+          pos: athlete.position?.abbreviation || athlete.position || "",
+          jersey: athlete.jersey || "",
+          stats: [],
+        };
+      }
+      const label = stat.shortDisplayName || stat.abbreviation || stat.name || catName;
+      const value = stat.displayValue || String(stat.value || "");
+      if (label && value && playerMap[name].stats.length < 4) {
+        playerMap[name].stats.push({ l: label, v: value });
+      }
+    }
+  }
+  return Object.values(playerMap).filter(p => p.stats.length > 0).slice(0, 5);
+}
+
+async function loadTeamData(team) {
+  const [sp, lg] = team.espn.split("/");
+  const scorePath = `sports/${sp}/${lg}/scoreboard`;
+
+  const [tr, sr, nr, statR] = await Promise.all([
+    fetch(`${PROXY}/team/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
+    fetch(`${PROXY}/espn?path=${encodeURIComponent(scorePath)}`).then(r => r.json()).catch(() => null),
+    fetch(`${PROXY}/news/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
+    fetch(`${PROXY}/stats/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
+  ]);
+
+  const td = tr?.team || tr || {};
+  const statArr = td.record?.items?.[0]?.stats || [];
+  const coach = td._headCoach || null;
+
+  const articles = (nr?.articles || []).slice(0, 6).map(a => ({
+    headline: a.headline || a.title || "",
+    link: a.links?.web?.href || a.link || a.url || null,
+    desc: a.description || a.summary || "",
+    published: a.published ? new Date(a.published).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null,
+  })).filter(a => a.headline);
+
+  // Log raw stats shape to console so we can debug if still empty
+  if (statR) {
+    console.log("[stats] top keys:", Object.keys(statR));
+    const cats = statR?.splits?.categories || statR?.results?.splits?.categories || statR?.categories || [];
+    console.log("[stats] categories count:", cats.length);
+    if (cats[0]) console.log("[stats] first cat:", cats[0].name, "stats count:", (cats[0].stats||[]).length);
+    if (cats[0]?.stats?.[0]) console.log("[stats] first stat:", JSON.stringify(cats[0].stats[0]).slice(0,200));
+  }
+
+  const players = statR ? parseTeamStats(statR) : [];
+
+  return {
+    record: parseRecord(td),
+    standing: td.standingSummary || null,
+    coach,
+    venue: td.venue?.fullName || null,
+    logo: td.logos?.[0]?.href || null,
+    game: sr ? parseGame(sr, team.id) : null,
+    pct: statArr.find(s => s.name === "winPercent")?.displayValue || null,
+    articles,
+    players,
+    _rawStats: statR, // expose for debug panel
+  };
+}
+
+// ── Main App ──
+function App(){
+  const[sel,setSel]     =useState(null);
+  const[filter,setFilter]=useState("ALL");
+  const[search,setSearch]=useState("");
+  const[tab,setTab]     =useState("teams");
+  const[viewTab,setVTab]=useState("stats"); // stats | news | players
+  const[openTip,setOT]  =useState(null);
+  const[qStep,setQS]    =useState(0);
+  const[qScore,setQSc]  =useState(0);
+  const[qDone,setQD]    =useState(false);
+  const[ticker,setTK]   =useState(0);
+  const[cache,setCache] =useState({});
+  const[loading,setLoad]=useState(false);
+  const[err,setErr]     =useState(null);
+  const[favs,setFavs]   =useState(()=>{try{return JSON.parse(localStorage.getItem(FAV_KEY)||"[]");}catch{return[];}});
+  const[favView,setFavView]=useState(false);
+
+  const ticks=["🔥 LIVE: Knicks in NBA Finals — first time since 1999","🏒 TUESDAY: Canes vs Vegas — Stanley Cup Final Game 1","⚡ TOMORROW: Thunder vs Spurs — Game 7 West Finals","⚾ BRAVES lead NL East at 37-18","🏈 SEAHAWKS defending Super Bowl LX champions"];
+  useEffect(()=>{const t=setInterval(()=>setTK(p=>(p+1)%ticks.length),3500);return()=>clearInterval(t);},[]);
+
+  // Persist favourites
+  useEffect(()=>{try{localStorage.setItem(FAV_KEY,JSON.stringify(favs));}catch{};},[favs]);
+
+  const toggleFav=useCallback((name,e)=>{
+    e&&e.stopPropagation();
+    setFavs(f=>f.includes(name)?f.filter(n=>n!==name):[...f,name]);
+  },[]);
+
+  async function pick(team){
+    setSel(team);setTab("teams");setVTab("stats");
+    if(cache[team.name]) return;
+    setLoad(true);setErr(null);
+    try{const d=await loadTeamData(team);setCache(p=>({...p,[team.name]:d}));}
+    catch(e){setErr(e.message);}
+    setLoad(false);
+  }
+
+  function doQ(bw){if(bw)setQSc(s=>s+1);if(qStep+1>=quiz.length)setQD(true);else setQS(s=>s+1);}
+  function bwLvl(){
+    if(qScore<=1)return{label:"Suspicious Loyalist",desc:"You might actually be a real fan.",color:"#22c55e"};
+    if(qScore===2)return{label:"Emerging Opportunist",desc:"You've got the instincts.",color:"#f59e0b"};
+    if(qScore===3)return{label:"Peak Bandwagoner",desc:"You are the reason sports Twitter exists.",color:"#ef4444"};
+    return{label:"Transcendent Bandwagoner",desc:"A masterclass. You are the algorithm.",color:"#a855f7"};
+  }
+
+  const q=search.toLowerCase();
+  const poolAll=favView?ALL_TEAMS.filter(t=>favs.includes(t.name)):ALL_TEAMS;
+  const filtered=poolAll.filter(t=>(filter==="ALL"||t.sport===filter)&&(!q||t.name.toLowerCase().includes(q)));
+  const live=sel?cache[sel.name]:null;
+  const ctx=sel?STATIC[sel.name]:null;
+  const ac=sel?.accent||"#c8102e";
+  const tc=sel?.color||"#c8102e";
+
+  const Card=({children,s})=><div style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"13px 14px",...s}}>{children}</div>;
+  const Lbl=({children})=><div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"5px"}}>{children}</div>;
+
+  return(
+    <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia,serif",color:"#f0ece4"}}>
+      {/* Ticker */}
+      <div style={{background:"#c8102e",padding:"7px 0",overflow:"hidden",borderBottom:"1px solid #900"}}>
+        <div style={{display:"flex",gap:"80px",animation:"scroll 22s linear infinite",whiteSpace:"nowrap"}}>
+          {[0,1,2,3,4].map(i=><span key={i} style={{fontSize:"12px",letterSpacing:"0.06em",fontFamily:"monospace",fontWeight:"bold"}}>{ticks[ticker]+"   ·   "}</span>)}
+        </div>
+      </div>
+
+      <div style={{maxWidth:"900px",margin:"0 auto",padding:"28px 18px"}}>
+        {/* Header */}
+        <div style={{textAlign:"center",marginBottom:"28px",animation:"fadeIn .5s ease"}}>
+          <div style={{fontSize:"11px",letterSpacing:"0.35em",color:"#c8102e",marginBottom:"10px",fontFamily:"monospace"}}>◆ OFFICIAL TRAINING PROGRAM ◆</div>
+          <h1 style={{fontSize:"clamp(36px,8vw,64px)",fontWeight:"900",lineHeight:1,margin:"0 0 10px",letterSpacing:"-0.025em",background:"linear-gradient(135deg,#f0ece4 30%,#c8102e)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>BANDWAGON<br/>BOOTCAMP</h1>
+          <p style={{color:"#888",fontSize:"14px",margin:0,fontStyle:"italic"}}>{ALL_TEAMS.length} teams · Live ESPN news & stats · May 30 2026</p>
+        </div>
+
+        {/* Nav */}
+        <div style={{display:"flex",gap:"3px",marginBottom:"22px",background:"#0d0d0d",padding:"4px",borderRadius:"8px",border:"1px solid #1c1c1c"}}>
+          {[["teams","🏟️ Teams"],["tips","📋 Tips"],["quiz","🎯 Quiz"]].map(([k,l])=>{
+            const on=tab===k;
+            return<button key={k} className="tb" onClick={()=>setTab(k)} style={{flex:1,padding:"10px 4px",border:"none",borderRadius:"6px",background:on?"#1c1c1c":"transparent",color:on?"#f0ece4":"#777",fontFamily:"Georgia,serif",fontSize:"13px",fontWeight:on?"bold":"normal",borderBottom:on?"2px solid "+ac:"2px solid transparent",cursor:"pointer"}}>{l}</button>;
+          })}
+        </div>
+
+        {/* ── TEAMS TAB ── */}
+        {tab==="teams"&&(
+          <div>
+            {sel?(
+              /* Detail view */
+              <div style={{animation:"flipIn .45s ease"}}>
+                {/* Back + fav */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"18px"}}>
+                  <button onClick={()=>{setSel(null);setErr(null);}} className="sp" style={{display:"flex",alignItems:"center",gap:"8px",background:"#1a1a1a",border:"1px solid #333",color:"#ccc",padding:"9px 16px",borderRadius:"8px",fontSize:"13px",fontFamily:"Georgia,serif",cursor:"pointer"}}>← All Teams</button>
+                  <button className="fav-btn" onClick={e=>toggleFav(sel.name,e)} title={favs.includes(sel.name)?"Remove from favourites":"Add to favourites"}>
+                    {favs.includes(sel.name)?"⭐":"☆"}
+                  </button>
+                </div>
+
+                {/* Hero */}
+                <div style={{background:"linear-gradient(135deg,"+tc+"22,#080808)",border:"1px solid "+tc+"44",borderTop:"4px solid "+tc,borderRadius:"14px",padding:"22px 24px",marginBottom:"14px"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:"16px"}}>
+                    {live?.logo&&<img src={live.logo} alt="" style={{width:"54px",height:"54px",objectFit:"contain",filter:"drop-shadow(0 0 8px rgba(255,255,255,0.15))"}}/>}
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:"11px",fontFamily:"monospace",color:ac,letterSpacing:"0.2em",marginBottom:"4px"}}>{sel.sport} · LIVE ESPN</div>
+                      <div style={{fontSize:"24px",fontWeight:"900",lineHeight:1.1,color:"#f0ece4"}}>{sel.name}</div>
+                      {live?.standing&&<div style={{marginTop:"5px",fontSize:"12px",color:"#bbb"}}>{live.standing}</div>}
+                    </div>
+                  </div>
+                </div>
+
+                {loading&&(
+                  <div style={{textAlign:"center",padding:"40px 0"}}>
+                    <div style={{width:"28px",height:"28px",border:"3px solid "+tc+"33",borderTop:"3px solid "+tc,borderRadius:"50%",animation:"spin .8s linear infinite",margin:"0 auto 14px"}}/>
+                    <div style={{fontFamily:"monospace",fontSize:"11px",color:"#777"}}>FETCHING LIVE ESPN DATA...</div>
+                    <div style={{fontFamily:"monospace",fontSize:"10px",color:"#444",marginTop:"4px"}}>news · stats · roster (first load ~30s)</div>
+                  </div>
+                )}
+                {err&&!loading&&(
+                  <div style={{marginBottom:"14px"}}>
+                    <div style={{background:"#180808",border:"1px solid #c8102e44",borderRadius:"8px",padding:"14px",fontSize:"12px",color:"#ff8888",fontFamily:"monospace",marginBottom:"10px"}}>⚠ {err}</div>
+                    <button className="sp" onClick={()=>{setErr(null);setCache(p=>{const n={...p};delete n[sel.name];return n;});pick(sel);}} style={{background:"#c8102e",border:"none",color:"white",padding:"8px 18px",borderRadius:"6px",cursor:"pointer",fontSize:"12px",fontFamily:"monospace",fontWeight:"bold"}}>RETRY</button>
+                  </div>
+                )}
+
+                {live&&!loading&&(
+                  <div style={{animation:"fadeIn .4s ease"}}>
+                    {/* Core stats row */}
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"9px",marginBottom:"9px"}}>
+                      <Card><Lbl>RECORD</Lbl><div style={{fontSize:"16px",fontWeight:"900",color:"#f0ece4"}}>{live.record||"—"}</div>{live.pct&&<div style={{fontSize:"11px",color:"#888",marginTop:"3px"}}>{(parseFloat(live.pct)*100).toFixed(1)}% win rate</div>}</Card>
+                      <Card><Lbl>HEAD COACH</Lbl><div style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4",lineHeight:1.3}}>{live.coach||"—"}</div><div style={{fontSize:"10px",color:"#555",marginTop:"3px"}}>Blame first</div></Card>
+                      <Card><Lbl>HOME VENUE</Lbl><div style={{fontSize:"12px",fontWeight:"bold",color:"#f0ece4",lineHeight:1.3}}>{live.venue||"—"}</div></Card>
+                    </div>
+                    {live.game&&<Card s={{marginBottom:"9px"}}><Lbl>📡 LATEST GAME</Lbl><div style={{fontSize:"14px",color:"#ddd",lineHeight:1.5}}>{live.game}</div></Card>}
+
+                    {/* Sub-tabs: Stats / News / Players */}
+                    <div style={{display:"flex",gap:"3px",margin:"14px 0 10px",background:"#0d0d0d",padding:"3px",borderRadius:"7px",border:"1px solid #1c1c1c"}}>
+                      {[["stats","📊 Stats"],["news","📰 News"],["players","👤 Players"]].map(([k,l])=>{
+                        const on=viewTab===k;
+                        return<button key={k} className="tb" onClick={()=>setVTab(k)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:"5px",background:on?"#1c1c1c":"transparent",color:on?"#f0ece4":"#666",fontFamily:"Georgia,serif",fontSize:"12px",fontWeight:on?"bold":"normal",borderBottom:on?"2px solid "+ac:"2px solid transparent",cursor:"pointer"}}>{l}</button>;
+                      })}
+                    </div>
+
+                    {/* Stats sub-tab */}
+                    {viewTab==="stats"&&ctx&&(
+                      <div style={{animation:"fadeIn .3s ease"}}>
+                        <div style={{background:tc+"15",border:"1px solid "+tc+"35",borderRadius:"10px",padding:"16px 18px",marginBottom:"9px"}}>
+                          <Lbl>🔥 YOUR READY-MADE HOT TAKE</Lbl>
+                          <div style={{fontSize:"15px",fontStyle:"italic",color:"#f0ece4",lineHeight:1.65}}>"{ctx.hotTake}"</div>
+                        </div>
+                        <Card><Lbl>💡 DROP THIS TO SOUND LEGIT</Lbl><div style={{fontSize:"13px",color:"#ccc",lineHeight:1.6}}>{ctx.keyFact}</div></Card>
+                      </div>
+                    )}
+
+                    {/* News sub-tab */}
+                    {viewTab==="news"&&(
+                      <div style={{animation:"fadeIn .3s ease"}}>
+                        {live.articles&&live.articles.length>0?(
+                          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                            {live.articles.map((a,i)=>(
+                              <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderLeft:"3px solid "+tc,borderRadius:"8px",padding:"12px 14px"}}>
+                                {a.link?(
+                                  <a href={a.link} target="_blank" rel="noopener noreferrer" className="news-link">
+                                    <div style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4",lineHeight:1.45,marginBottom:"4px"}}>{a.headline} ↗</div>
+                                  </a>
+                                ):(
+                                  <div style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4",lineHeight:1.45,marginBottom:"4px"}}>{a.headline}</div>
+                                )}
+                                {a.desc&&<div style={{fontSize:"12px",color:"#888",lineHeight:1.5,marginTop:"4px"}}>{a.desc.slice(0,120)}{a.desc.length>120?"…":""}</div>}
+                                {a.published&&<div style={{fontSize:"10px",color:"#444",fontFamily:"monospace",marginTop:"6px"}}>{a.published}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        ):(
+                          <div style={{textAlign:"center",padding:"30px",color:"#444",fontFamily:"monospace",fontSize:"12px"}}>No news articles found via ESPN.</div>
+                        )}
+                        <div style={{marginTop:"10px",padding:"6px",background:"#040404",borderRadius:"5px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>LIVE NEWS FROM ESPN · LINKS OPEN FULL STORY</div>
+                      </div>
+                    )}
+
+                    {/* Players sub-tab */}
+                    {viewTab==="players"&&(
+                      <div style={{animation:"fadeIn .3s ease"}}>
+                        {live.players&&live.players.length>0?(
+                          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                            {live.players.map((p,i)=>(
+                              <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"14px 15px"}}>
+                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+                                  <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+                                  <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
+                                </div>
+                                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"6px"}}>
+                                  {p.stats.map((s,j)=>(
+                                    <div key={j} style={{background:"#0d0d0d",borderRadius:"6px",padding:"8px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                      <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.l}</span>
+                                      <span style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{s.v}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ):(
+                          <div>
+                            <div style={{textAlign:"center",padding:"20px",color:"#555",fontFamily:"monospace",fontSize:"12px",marginBottom:"10px"}}>Player stats not available via ESPN for this team/season.</div>
+                            {live._rawStats&&(
+                              <div style={{background:"#0d0d0d",border:"1px solid #333",borderRadius:"8px",padding:"12px",fontSize:"10px",fontFamily:"monospace",color:"#666",lineHeight:1.7,overflowX:"auto"}}>
+                                <div style={{color:"#c8102e",marginBottom:"6px"}}>DEBUG — Raw ESPN /statistics response keys:</div>
+                                <div>Top keys: {Object.keys(live._rawStats).join(", ")}</div>
+                                {live._rawStats.results&&<div>results keys: {Object.keys(live._rawStats.results).join(", ")}</div>}
+                                {live._rawStats.results?.splits&&<div>results.splits keys: {Object.keys(live._rawStats.results.splits).join(", ")}</div>}
+                                {live._rawStats.results?.splits?.categories&&<div>categories count: {live._rawStats.results.splits.categories.length}</div>}
+                                {live._rawStats.results?.splits?.categories?.[0]&&<div>first cat name: "{live._rawStats.results.splits.categories[0].name}" stats count: {(live._rawStats.results.splits.categories[0].stats||[]).length}</div>}
+                                {live._rawStats.results?.splits?.categories?.[0]?.stats?.[0]&&<div style={{marginTop:"4px",wordBreak:"break-all"}}>first stat: {JSON.stringify(live._rawStats.results.splits.categories[0].stats[0]).slice(0,400)}</div>}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div style={{marginTop:"10px",padding:"6px",background:"#040404",borderRadius:"5px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>LIVE STATS FROM ESPN · /teams/:id/statistics</div>
+                      </div>
+                    )}
+
+                    <div style={{marginTop:"10px",padding:"7px",background:"#040404",borderRadius:"6px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>⚡ sports-proxy-a8md.onrender.com · {new Date().toLocaleDateString()}</div>
+                  </div>
+                )}
+              </div>
+            ):(
+              /* Grid view */
+              <div style={{animation:"fadeIn .4s ease"}}>
+                {/* Search + favourites toggle */}
+                <div style={{display:"flex",gap:"8px",marginBottom:"12px",flexWrap:"wrap"}}>
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search teams..." style={{flex:1,minWidth:"140px",background:"#141414",border:"1px solid #2a2a2a",borderRadius:"8px",padding:"9px 14px",color:"#f0ece4",fontFamily:"Georgia,serif",fontSize:"13px"}}/>
+                  <button className="sp" onClick={()=>{setFavView(f=>!f);setSearch("");}} style={{padding:"9px 16px",borderRadius:"8px",border:"1px solid "+(favView?"#f59e0b":"#2a2a2a"),background:favView?"#f59e0b22":"#141414",color:favView?"#f59e0b":"#bbb",fontSize:"13px",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                    {favView?"⭐ Favourites":"☆ Favourites"}{favs.length>0&&` (${favs.length})`}
+                  </button>
+                </div>
+
+                {/* Sport filter */}
+                <div style={{display:"flex",gap:"6px",flexWrap:"wrap",marginBottom:"14px"}}>
+                  {SPORTS.map(s=>{const on=filter===s;const cnt=ALL_TEAMS.filter(t=>t.sport===s).length;return<button key={s} className="sp" onClick={()=>setFilter(s)} style={{padding:"5px 12px",borderRadius:"20px",border:"1px solid "+(on?"#c8102e":"#2a2a2a"),background:on?"#c8102e":"#141414",color:on?"#fff":"#bbb",fontSize:"11px",fontFamily:"monospace",letterSpacing:"0.05em"}}>{s}{s!=="ALL"?` ${cnt}`:""}</button>;})}
+                </div>
+
+                {favView&&favs.length===0&&(
+                  <div style={{textAlign:"center",padding:"40px 20px",color:"#555",fontSize:"14px",fontStyle:"italic"}}>
+                    No favourites yet — tap ☆ on any team to add it here.
+                  </div>
+                )}
+
+                <div style={{fontSize:"11px",color:"#444",fontFamily:"monospace",marginBottom:"10px"}}>{filtered.length} team{filtered.length!==1?"s":""}</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(165px,1fr))",gap:"8px"}}>
+                  {filtered.map(team=>{
+                    const c=cache[team.name];
+                    const isFav=favs.includes(team.name);
+                    return(
+                      <div key={team.name} className="tc" onClick={()=>pick(team)} style={{background:"#111",border:"1.5px solid "+(isFav?"#f59e0b44":"#252525"),borderRadius:"10px",padding:"13px 14px",position:"relative"}}>
+                        {isFav&&<span style={{position:"absolute",top:"8px",right:"8px",fontSize:"12px"}}>⭐</span>}
+                        <div style={{fontSize:"20px",marginBottom:"4px"}}>{team.emoji}</div>
+                        <div style={{fontSize:"12px",fontWeight:"bold",marginBottom:"2px",lineHeight:1.3,color:"#f0ece4",paddingRight:isFav?"16px":"0"}}>{team.name}</div>
+                        <div style={{fontSize:"10px",fontFamily:"monospace",color:"#888",letterSpacing:"0.06em"}}>{team.sport}</div>
+                        {c?.record?<div style={{marginTop:"5px",fontSize:"11px",color:team.accent,fontFamily:"monospace",fontWeight:"bold"}}>{c.record}</div>:<div style={{marginTop:"5px",fontSize:"10px",color:"#333",fontFamily:"monospace"}}>tap for live stats</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TIPS TAB ── */}
+        {tab==="tips"&&(
+          <div style={{animation:"fadeIn .4s ease"}}>
+            <div style={{fontSize:"10px",color:"#888",marginBottom:"14px",fontFamily:"monospace",letterSpacing:"0.1em"}}>CLICK TO EXPAND</div>
+            {tips.map((sec,i)=>{const open=openTip===i;return(
+              <div key={i} className="tip" onClick={()=>setOT(open?null:i)} style={{background:"#111",border:"1px solid #252525",borderLeft:open?"3px solid #c8102e":"3px solid transparent",borderRadius:"8px",marginBottom:"8px",overflow:"hidden"}}>
+                <div style={{padding:"14px 17px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{sec.icon} {sec.category}</span>
+                  <span style={{color:"#888",fontSize:"18px"}}>{open?"−":"+"}</span>
+                </div>
+                {open&&<div style={{padding:"0 17px 17px",animation:"fadeIn .2s ease"}}>
+                  {sec.tips.map((tip,j)=><div key={j} style={{padding:"9px 12px",marginBottom:"6px",background:"#0d0d0d",borderRadius:"6px",border:"1px solid #222",fontSize:"13px",lineHeight:1.55,color:"#ddd",display:"flex",gap:"10px"}}>
+                    <span style={{color:"#c8102e",flexShrink:0,fontFamily:"monospace"}}>{String(j+1).padStart(2,"0")}</span>{tip}
+                  </div>)}
+                </div>}
+              </div>
+            );})}
+            <div style={{marginTop:"16px",padding:"16px 18px",background:"#0d0d0d",border:"1px solid #252525",borderTop:"3px solid #c8102e",borderRadius:"8px",fontSize:"13px",color:"#ccc",lineHeight:1.7}}>
+              <div style={{color:"#c8102e",fontFamily:"monospace",fontSize:"10px",letterSpacing:"0.2em",marginBottom:"8px"}}>◆ ADVANCED PRO TIP</div>
+              The true bandwagon fan never admits to being one. You have "eclectic taste in franchises" and you "appreciate excellence wherever it lives." Internalize this. Say it in the mirror. You are ready.
+            </div>
+          </div>
+        )}
+
+        {/* ── QUIZ TAB ── */}
+        {tab==="quiz"&&(
+          <div style={{animation:"fadeIn .4s ease"}}>
+            {!qDone?(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}}>
+                  <div style={{fontFamily:"monospace",fontSize:"10px",color:"#888",letterSpacing:"0.1em"}}>QUESTION {qStep+1} OF {quiz.length}</div>
+                  <div style={{display:"flex",gap:"4px"}}>{quiz.map((_,i)=><div key={i} style={{width:"20px",height:"3px",borderRadius:"2px",background:i<=qStep?"#c8102e":"#2a2a2a",transition:"background .3s"}}/>)}</div>
+                </div>
+                <div style={{background:"#111",border:"1px solid #252525",borderRadius:"12px",padding:"24px"}}>
+                  <p style={{fontSize:"16px",fontWeight:"bold",margin:"0 0 18px",lineHeight:1.45,color:"#f0ece4"}}>{quiz[qStep].q}</p>
+                  <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                    {quiz[qStep].options.map((opt,i)=><button key={i} className="qo" onClick={()=>doQ(quiz[qStep].bandwagon[i])} style={{background:"#0d0d0d",border:"1px solid #2a2a2a",color:"#ddd",padding:"12px 15px",borderRadius:"7px",textAlign:"left",fontSize:"13px",fontFamily:"Georgia,serif",lineHeight:1.45}}>
+                      <span style={{color:"#c8102e",fontFamily:"monospace",marginRight:"10px"}}>{String.fromCharCode(65+i)}.</span>{opt}
+                    </button>)}
+                  </div>
+                </div>
+              </div>
+            ):(()=>{const r=bwLvl();return(
+              <div style={{animation:"fadeIn .5s ease"}}>
+                <div style={{background:"#111",border:"2px solid "+r.color,borderRadius:"12px",padding:"32px",textAlign:"center"}}>
+                  <div style={{fontSize:"44px",marginBottom:"14px"}}>🏆</div>
+                  <div style={{fontSize:"10px",letterSpacing:"0.3em",color:"#888",fontFamily:"monospace",marginBottom:"10px"}}>CERTIFICATION LEVEL</div>
+                  <div style={{fontSize:"26px",fontWeight:"900",color:r.color,marginBottom:"10px"}}>{r.label}</div>
+                  <p style={{color:"#ccc",fontSize:"14px",marginBottom:"20px"}}>{r.desc}</p>
+                  <div style={{display:"inline-block",padding:"6px 18px",background:"#0d0d0d",border:"1px solid "+r.color+"55",borderRadius:"20px",fontFamily:"monospace",fontSize:"11px",color:"#aaa"}}>{qScore}/{quiz.length} bandwagon answers</div>
+                  <div style={{marginTop:"20px"}}>
+                    <button className="sp" onClick={()=>{setQS(0);setQSc(0);setQD(false);}} style={{background:"#c8102e",border:"none",color:"white",padding:"11px 22px",borderRadius:"6px",cursor:"pointer",fontSize:"13px",fontFamily:"Georgia,serif",fontWeight:"bold"}}>Retake (You Can Do Better / Worse)</button>
+                  </div>
+                </div>
+              </div>
+            );})()}
+          </div>
+        )}
+
+        <div style={{textAlign:"center",marginTop:"40px",paddingTop:"16px",borderTop:"1px solid #1a1a1a",fontSize:"10px",color:"#444",fontFamily:"monospace",letterSpacing:"0.08em"}}>
+          BANDWAGON BOOTCAMP · {ALL_TEAMS.length} TEAMS · LIVE ESPN · MAY 30 2026 · NO PRIOR LOYALTY REQUIRED
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
