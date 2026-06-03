@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><style>body{background:#111;color:#0f0;font-family:monospace;padding:20px;font-size:12px;}</style></head>
+<body>
+<h2 style="color:#fff">ESPN Proxy Diagnostics</h2>
+<div id="out">Loading...</div>
+<script>
+const PROXY = "https://sports-proxy-a8md.onrender.com";
+async function run() {
+  const out = document.getElementById("out");
+  const tests = [
+    ["Knicks teamstats", `${PROXY}/teamstats/basketball/nba/18`],
+    ["Mets teamstats",   `${PROXY}/teamstats/baseball/mlb/21`],
+    ["Bills teamstats",  `${PROXY}/teamstats/football/nfl/2`],
+    ["Spurs players",    `${PROXY}/players/basketball/nba/24`],
+    ["Knicks diag",      `${PROXY}/diag/basketball/nba/18`],
+  ];
+  
+  let html = "";
+  for (const [name, url] of tests) {
+    try {
+      const r = await fetch(url);
+      const d = await r.json();
+      html += `<div style="border:1px solid #333;margin:10px 0;padding:10px;">`;
+      html += `<div style="color:#ff0;font-size:14px;margin-bottom:6px">▶ ${name}</div>`;
+      html += `<pre>${JSON.stringify(d, null, 2).slice(0, 2000)}</pre>`;
+      html += `</div>`;
+    } catch(e) {
+      html += `<div style="color:red">❌ ${name}: ${e.message}</div>`;
+    }
+    out.innerHTML = html + "<div style='color:#888'>...</div>";
+  }
+  out.innerHTML = html + "<div style='color:#0f0'>✅ Done</div>";
+}
+run();
+</script>
+</body>
+</html>
