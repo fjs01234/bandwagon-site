@@ -317,6 +317,7 @@ async function loadTeamData(team) {
     players,
     teamStats: tsr?.categories || [],
     teamAthletes: tsr?.athletes || [],
+    teamLeaders: tsr?.leaders || [],
     teamStatsYear: tsr?.season || null,
     _playersMeta: pr ? (pr._total || "?") + " athletes" : "No response",
   };
@@ -476,47 +477,21 @@ function App(){
                     {/* Stats sub-tab — real time team stats */}
                     {viewTab==="stats"&&(
                       <div style={{animation:"fadeIn .3s ease"}}>
-                        {live.teamStats&&live.teamStats.length>0?(
-                          <div style={{display:"flex",flexDirection:"column",gap:"14px"}}>
-                            {live.teamStats.map((cat,i)=>{
-                              const valid=(cat.stats||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00",""].includes(s.displayValue));
-                              if(!valid.length) return null;
-                              return(
-                                <div key={i}>
-                                  <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"7px"}}>{(cat.displayName||cat.name||"").toUpperCase()}</div>
-                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"6px"}}>
-                                    {valid.slice(0,10).map((s,j)=>(
-                                      <div key={j} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"7px",padding:"9px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"6px"}}>
-                                        <span style={{fontSize:"10px",fontFamily:"monospace",color:"#777",flexShrink:0}}>{s.shortDisplayName||s.abbreviation||s.name}</span>
-                                        <span style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
-                                      </div>
-                                    ))}
+                        {live.teamLeaders&&live.teamLeaders.length>0?(
+                          <div>
+                            <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"10px"}}>TEAM SEASON LEADERS · {live.teamStatsYear||""} · ESPN</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
+                              {live.teamLeaders.map((item,i)=>(
+                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"8px",padding:"11px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                  <div>
+                                    <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",marginBottom:"3px"}}>{item.category}</div>
+                                    <div style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{item.athlete}</div>
+                                    <div style={{fontSize:"10px",color:"#666",fontFamily:"monospace"}}>{item.pos}</div>
                                   </div>
+                                  <div style={{fontSize:"22px",fontWeight:"900",color:ac}}>{item.value}</div>
                                 </div>
-                              );
-                            })}
-                            <div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>{live.teamStatsYear||""} · ESPN</div>
-                          </div>
-                        ):live.teamAthletes&&live.teamAthletes.length>0?(
-                          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                            <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"4px"}}>TEAM LEADERS</div>
-                            {live.teamAthletes.map((p,i)=>(
-                              <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"12px 14px"}}>
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
-                                  <div style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
-                                  <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"2px 7px",borderRadius:"4px"}}>{p.pos}</div>
-                                </div>
-                                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
-                                  {p.stats.map((s,j)=>(
-                                    <div key={j} style={{background:"#0d0d0d",borderRadius:"5px",padding:"7px 10px",display:"flex",justifyContent:"space-between"}}>
-                                      <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.shortDisplayName}</span>
-                                      <span style={{fontSize:"12px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
-                            <div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>{live.teamStatsYear||""} · ESPN</div>
+                              ))}
+                            </div>
                           </div>
                         ):(
                           <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>Team stats not available for this team/season.</div>
