@@ -317,7 +317,8 @@ async function loadTeamData(team) {
     players,
     teamStats: tsr?.categories || [],
     teamStatsYear: tsr?.season || null,
-    _playersMeta: pr ? `Roster: ${pr._rosterCount || pr._total || "?"} athletes` : "No response",
+    _statsDebug: tsr || null,
+    _playersMeta: pr ? `${pr._total||"?"} roster · ${pr.players?.length||0} with stats · ${JSON.stringify(pr._debug||{})}` : "No response",
   };
 }
 
@@ -497,8 +498,17 @@ function App(){
                             <div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>{live.teamStatsYear||""} season · ESPN</div>
                           </div>
                         ):(
-                          <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>Team stats not available for this team/season.</div>
-                        )}
+                          <div style={{textAlign:"center",padding:"20px",color:"#555",fontFamily:"monospace",fontSize:"11px"}}>
+                            <div style={{marginBottom:"8px"}}>Team stats not available for this team/season.</div>
+                            {live._statsDebug&&<div style={{background:"#0d0d0d",border:"1px solid #333",borderRadius:"6px",padding:"10px",textAlign:"left",lineHeight:1.7,color:"#666",wordBreak:"break-all"}}>
+                              <div style={{color:"#c8102e",marginBottom:"4px"}}>DEBUG:</div>
+                              <div>top keys: {live._statsDebug.topKeys?.join(", ")}</div>
+                              {live._statsDebug._raw?.results&&<div>results keys: {Object.keys(live._statsDebug._raw.results).join(", ")}</div>}
+                              {live._statsDebug._raw?.results?.splits&&<div>splits keys: {Object.keys(live._statsDebug._raw.results.splits).join(", ")}</div>}
+                              {live._statsDebug._raw?.results?.splits?.categories&&<div>categories: {live._statsDebug._raw.results.splits.categories.length} found</div>}
+                              {live._statsDebug._raw?.results?.splits?.categories?.[0]&&<div>first cat: {JSON.stringify(live._statsDebug._raw.results.splits.categories[0]).slice(0,300)}</div>}
+                            </div>}
+                          </div>
                       </div>
                     )}
 
