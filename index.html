@@ -279,52 +279,15 @@ function parseGame(sb,tid){
     return`Next: ${n1} vs ${n2} · ${date}`;
   }return null;
 }
-function parseTeamStats(statsData) {
-  // ESPN /teams/:id/statistics returns:
-  // { splits: { categories: [ { name, stats: [ { name, displayName, displayValue, athlete: { displayName, position, jersey } } ] } ] } }
-  // OR: { results: { stats: { splits: { categories: [...] } } } }
-  const categories =
-    statsData?.splits?.categories ||
-    statsData?.results?.splits?.categories ||
-    statsData?.statistics?.splits?.categories ||
-    statsData?.categories ||
-    [];
-
-  const playerMap = {};
-
-  for (const cat of categories) {
-    const catName = cat.shortDisplayName || cat.displayName || cat.name || "";
-    for (const stat of (cat.stats || cat.leaders || [])) {
-      const athlete = stat.athlete || stat.player;
-      if (!athlete?.displayName) continue;
-      const name = athlete.displayName;
-      if (!playerMap[name]) {
-        playerMap[name] = {
-          name,
-          pos: athlete.position?.abbreviation || athlete.position || "",
-          jersey: athlete.jersey || "",
-          stats: [],
-        };
-      }
-      const label = stat.shortDisplayName || stat.abbreviation || stat.name || catName;
-      const value = stat.displayValue || String(stat.value || "");
-      if (label && value && playerMap[name].stats.length < 4) {
-        playerMap[name].stats.push({ l: label, v: value });
-      }
-    }
-  }
-  return Object.values(playerMap).filter(p => p.stats.length > 0).slice(0, 5);
-}
-
 async function loadTeamData(team) {
   const [sp, lg] = team.espn.split("/");
   const scorePath = `sports/${sp}/${lg}/scoreboard`;
 
-  const [tr, sr, nr, statR] = await Promise.all([
+  const [tr, sr, nr, pr] = await Promise.all([
     fetch(`${PROXY}/team/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
     fetch(`${PROXY}/espn?path=${encodeURIComponent(scorePath)}`).then(r => r.json()).catch(() => null),
     fetch(`${PROXY}/news/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
-    fetch(`${PROXY}/stats/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
+    fetch(`${PROXY}/players/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
   ]);
 
   const td = tr?.team || tr || {};
@@ -338,16 +301,8 @@ async function loadTeamData(team) {
     published: a.published ? new Date(a.published).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null,
   })).filter(a => a.headline);
 
-  // Log raw stats shape to console so we can debug if still empty
-  if (statR) {
-    console.log("[stats] top keys:", Object.keys(statR));
-    const cats = statR?.splits?.categories || statR?.results?.splits?.categories || statR?.categories || [];
-    console.log("[stats] categories count:", cats.length);
-    if (cats[0]) console.log("[stats] first cat:", cats[0].name, "stats count:", (cats[0].stats||[]).length);
-    if (cats[0]?.stats?.[0]) console.log("[stats] first stat:", JSON.stringify(cats[0].stats[0]).slice(0,200));
-  }
-
-  const players = statR ? parseTeamStats(statR) : [];
+  // Players come pre-parsed from proxy
+  const players = pr?.players || [];
 
   return {
     record: parseRecord(td),
@@ -359,7 +314,7 @@ async function loadTeamData(team) {
     pct: statArr.find(s => s.name === "winPercent")?.displayValue || null,
     articles,
     players,
-    _rawStats: statR, // expose for debug panel
+    _playersMeta: pr ? `Roster: ${pr._rosterCount || "?"} athletes` : "No response",
   };
 }
 
@@ -563,19 +518,9 @@ function App(){
                             ))}
                           </div>
                         ):(
-                          <div>
-                            <div style={{textAlign:"center",padding:"20px",color:"#555",fontFamily:"monospace",fontSize:"12px",marginBottom:"10px"}}>Player stats not available via ESPN for this team/season.</div>
-                            {live._rawStats&&(
-                              <div style={{background:"#0d0d0d",border:"1px solid #333",borderRadius:"8px",padding:"12px",fontSize:"10px",fontFamily:"monospace",color:"#666",lineHeight:1.7,overflowX:"auto"}}>
-                                <div style={{color:"#c8102e",marginBottom:"6px"}}>DEBUG — Raw ESPN /statistics response keys:</div>
-                                <div>Top keys: {Object.keys(live._rawStats).join(", ")}</div>
-                                {live._rawStats.results&&<div>results keys: {Object.keys(live._rawStats.results).join(", ")}</div>}
-                                {live._rawStats.results?.splits&&<div>results.splits keys: {Object.keys(live._rawStats.results.splits).join(", ")}</div>}
-                                {live._rawStats.results?.splits?.categories&&<div>categories count: {live._rawStats.results.splits.categories.length}</div>}
-                                {live._rawStats.results?.splits?.categories?.[0]&&<div>first cat name: "{live._rawStats.results.splits.categories[0].name}" stats count: {(live._rawStats.results.splits.categories[0].stats||[]).length}</div>}
-                                {live._rawStats.results?.splits?.categories?.[0]?.stats?.[0]&&<div style={{marginTop:"4px",wordBreak:"break-all"}}>first stat: {JSON.stringify(live._rawStats.results.splits.categories[0].stats[0]).slice(0,400)}</div>}
-                              </div>
-                            )}
+                          <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>
+                            <div>No player stats available via ESPN.</div>
+                            {live._playersMeta&&<div style={{marginTop:"8px",color:"#333"}}>{live._playersMeta}</div>}
                           </div>
                         )}
                         <div style={{marginTop:"10px",padding:"6px",background:"#040404",borderRadius:"5px",border:"1px dashed #1a1a1a",fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>LIVE STATS FROM ESPN · /teams/:id/statistics</div>
