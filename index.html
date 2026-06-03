@@ -283,11 +283,12 @@ async function loadTeamData(team) {
   const [sp, lg] = team.espn.split("/");
   const scorePath = `sports/${sp}/${lg}/scoreboard`;
 
-  const [tr, sr, nr, pr] = await Promise.all([
+  const [tr, sr, nr, pr, tsr] = await Promise.all([
     fetch(`${PROXY}/team/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
     fetch(`${PROXY}/espn?path=${encodeURIComponent(scorePath)}`).then(r => r.json()).catch(() => null),
     fetch(`${PROXY}/news/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
     fetch(`${PROXY}/players/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
+    fetch(`${PROXY}/teamstats/${sp}/${lg}/${team.id}`).then(r => r.json()).catch(() => null),
   ]);
 
   const td = tr?.team || tr || {};
@@ -314,7 +315,9 @@ async function loadTeamData(team) {
     pct: statArr.find(s => s.name === "winPercent")?.displayValue || null,
     articles,
     players,
-    _playersMeta: pr ? `Roster: ${pr._rosterCount || "?"} athletes` : "No response",
+    teamStats: tsr?.categories || [],
+    teamStatsYear: tsr?.year || null,
+    _playersMeta: pr ? `Roster: ${pr._rosterCount || pr._total || "?"} athletes` : "No response",
   };
 }
 
@@ -324,7 +327,7 @@ function App(){
   const[filter,setFilter]=useState("ALL");
   const[search,setSearch]=useState("");
   const[tab,setTab]     =useState("teams");
-  const[viewTab,setVTab]=useState("stats"); // stats | news | players
+  const[viewTab,setVTab]=useState("hottakes"); // hottakes | stats | news | players
   const[openTip,setOT]  =useState(null);
   const[qStep,setQS]    =useState(0);
   const[qScore,setQSc]  =useState(0);
@@ -348,7 +351,7 @@ function App(){
   },[]);
 
   async function pick(team){
-    setSel(team);setTab("teams");setVTab("stats");
+    setSel(team);setTab("teams");setVTab("hottakes");
     if(cache[team.name]) return;
     setLoad(true);setErr(null);
     try{const d=await loadTeamData(team);setCache(p=>({...p,[team.name]:d}));}
@@ -450,22 +453,48 @@ function App(){
                     </div>
                     {live.game&&<Card s={{marginBottom:"9px"}}><Lbl>📡 LATEST GAME</Lbl><div style={{fontSize:"14px",color:"#ddd",lineHeight:1.5}}>{live.game}</div></Card>}
 
-                    {/* Sub-tabs: Stats / News / Players */}
+                    {/* Sub-tabs: Hot Takes / Stats / News / Players */}
                     <div style={{display:"flex",gap:"3px",margin:"14px 0 10px",background:"#0d0d0d",padding:"3px",borderRadius:"7px",border:"1px solid #1c1c1c"}}>
-                      {[["stats","📊 Stats"],["news","📰 News"],["players","👤 Players"]].map(([k,l])=>{
+                      {[["hottakes","🔥 Hot Takes"],["stats","📊 Stats"],["news","📰 News"],["players","👤 Players"]].map(([k,l])=>{
                         const on=viewTab===k;
-                        return<button key={k} className="tb" onClick={()=>setVTab(k)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:"5px",background:on?"#1c1c1c":"transparent",color:on?"#f0ece4":"#666",fontFamily:"Georgia,serif",fontSize:"12px",fontWeight:on?"bold":"normal",borderBottom:on?"2px solid "+ac:"2px solid transparent",cursor:"pointer"}}>{l}</button>;
+                        return<button key={k} className="tb" onClick={()=>setVTab(k)} style={{flex:1,padding:"8px 2px",border:"none",borderRadius:"5px",background:on?"#1c1c1c":"transparent",color:on?"#f0ece4":"#666",fontFamily:"Georgia,serif",fontSize:"11px",fontWeight:on?"bold":"normal",borderBottom:on?"2px solid "+ac:"2px solid transparent",cursor:"pointer"}}>{l}</button>;
                       })}
                     </div>
 
-                    {/* Stats sub-tab */}
-                    {viewTab==="stats"&&ctx&&(
+                    {/* Hot Takes sub-tab */}
+                    {viewTab==="hottakes"&&ctx&&(
                       <div style={{animation:"fadeIn .3s ease"}}>
                         <div style={{background:tc+"15",border:"1px solid "+tc+"35",borderRadius:"10px",padding:"16px 18px",marginBottom:"9px"}}>
                           <Lbl>🔥 YOUR READY-MADE HOT TAKE</Lbl>
                           <div style={{fontSize:"15px",fontStyle:"italic",color:"#f0ece4",lineHeight:1.65}}>"{ctx.hotTake}"</div>
                         </div>
                         <Card><Lbl>💡 DROP THIS TO SOUND LEGIT</Lbl><div style={{fontSize:"13px",color:"#ccc",lineHeight:1.6}}>{ctx.keyFact}</div></Card>
+                      </div>
+                    )}
+
+                    {/* Stats sub-tab */}
+                    {viewTab==="stats"&&(
+                      <div style={{animation:"fadeIn .3s ease"}}>
+                        {live.teamStats&&live.teamStats.length>0?(
+                          <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+                            {live.teamStats.map((cat,i)=>(
+                              <div key={i}>
+                                <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"7px"}}>{(cat.displayName||cat.name||"").toUpperCase()}</div>
+                                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"6px"}}>
+                                  {(cat.stats||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00"].includes(s.displayValue)).slice(0,8).map((s,j)=>(
+                                    <div key={j} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"7px",padding:"9px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                      <span style={{fontSize:"10px",fontFamily:"monospace",color:"#777"}}>{s.shortDisplayName||s.abbreviation||s.name}</span>
+                                      <span style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            {live.teamStatsYear&&<div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center",marginTop:"8px"}}>{live.teamStatsYear} season · ESPN core API</div>}
+                          </div>
+                        ):(
+                          <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>Team stats not available for this team/season.</div>
+                        )}
                       </div>
                     )}
 
