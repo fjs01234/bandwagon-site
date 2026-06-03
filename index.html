@@ -316,6 +316,7 @@ async function loadTeamData(team) {
     articles,
     players,
     teamStats: tsr?.categories || [],
+    teamAthletes: tsr?.athletes || [],
     teamStatsYear: tsr?.season || null,
     _playersMeta: pr ? (pr._total || "?") + " athletes" : "No response",
   };
@@ -494,6 +495,27 @@ function App(){
                                 </div>
                               );
                             })}
+                            <div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>{live.teamStatsYear||""} · ESPN</div>
+                          </div>
+                        ):live.teamAthletes&&live.teamAthletes.length>0?(
+                          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                            <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"4px"}}>TEAM LEADERS</div>
+                            {live.teamAthletes.map((p,i)=>(
+                              <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"12px 14px"}}>
+                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
+                                  <div style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+                                  <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"2px 7px",borderRadius:"4px"}}>{p.pos}</div>
+                                </div>
+                                <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
+                                  {p.stats.map((s,j)=>(
+                                    <div key={j} style={{background:"#0d0d0d",borderRadius:"5px",padding:"7px 10px",display:"flex",justifyContent:"space-between"}}>
+                                      <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.shortDisplayName}</span>
+                                      <span style={{fontSize:"12px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
                             <div style={{fontSize:"10px",color:"#333",fontFamily:"monospace",textAlign:"center"}}>{live.teamStatsYear||""} · ESPN</div>
                           </div>
                         ):(
