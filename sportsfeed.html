@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hardball — Live Sports Feed</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body,#root{height:100%;width:100%}
+  body{background:#0a0a0a;color:#f0f0f0;font-family:'DM Sans',sans-serif;overflow-x:hidden}
+  ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#111}::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  @keyframes scrollX{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 1.4s ease infinite;display:inline-block;flex-shrink:0}
+  .live-dot.red{background:#ef4444}
+  .skeleton{background:linear-gradient(90deg,#1a1a1a 25%,#242424 50%,#1a1a1a 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px}
+  .card{background:#141414;border:1px solid #1f1f1f;border-radius:12px;transition:all .15s}
+  .card:active{background:#1a1a1a}
+  .tab-btn{cursor:pointer;transition:all .15s;border:none;background:none;font-family:'DM Sans',sans-serif}
+  .sport-tab{padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;transition:all .15s;border:none}
+  .feed-item{animation:slideUp .3s ease forwards}
+  .win-bar-fill{transition:width .6s ease}
+  .score-scroll{display:flex;gap:0;animation:scrollX 35s linear infinite}
+  .score-scroll:hover{animation-play-state:paused}
+  a{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef,useCallback}=React;
+const PROXY="https://sports-proxy-a8md.onrender.com";
+
+const SPORTS=[
+  {key:"nba",  label:"NBA",   espn:"basketball/nba",  color:"#f97316"},
+  {key:"mlb",  label:"MLB",   espn:"baseball/mlb",    color:"#22c55e"},
+  {key:"nhl",  label:"NHL",   espn:"hockey/nhl",      color:"#60a5fa"},
+  {key:"nfl",  label:"NFL",   espn:"football/nfl",    color:"#a78bfa"},
+  {key:"soccer",label:"FC",   espn:"soccer/usa.1",    color:"#fb7185"},
+];
+
+function timeSince(dateStr){
+  if(!dateStr) return "";
+  const diff=(Date.now()-new Date(dateStr))/1000;
+  if(diff<60) return "now";
+  if(diff<3600) return Math.floor(diff/60)+"m";
+  if(diff<86400) return Math.floor(diff/3600)+"h";
+  return Math.floor(diff/86400)+"d";
+}
+
+function statusLabel(ev){
+  const st=ev.status?.type;
+  if(st?.completed) return "Final";
+  if(st?.state==="in") {
+    const detail=ev.status?.displayClock||"";
+    const period=ev.status?.period||"";
+    return detail ? `${detail} ${periodLabel(ev,period)}` : st.shortDetail||"Live";
+  }
+  const date=ev.date?new Date(ev.date):null;
+  if(date) return date.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  return st?.shortDetail||"";
+}
+
+function periodLabel(ev,p){
+  const sport=ev._sport||"";
+  if(sport==="basketball/nba"){return p===5?"OT":(p>5?`${p-4}OT`:`Q${p}`);}
+  if(sport==="hockey/nhl"){return p===4?"OT":(p>4?"SO":`P${p}`);}
+  if(sport==="baseball/mlb"){const inn=ev.status?.period||1;const half=ev.status?.type?.shortDetail?.includes("Bot")?"Bot":"Top";return `${half} ${inn}`;}
+  return `${p}`;
+}
+
+function isLive(ev){return ev.status?.type?.state==="in";}
+function isFinal(ev){return ev.status?.type?.completed;}
+
+// Parse scoreboard events
+function parseEvents(data, sportKey){
+  return (data?.events||[]).map(ev=>{
+    const comp=ev.competitions?.[0]||{};
+    const [home,away]=comp.competitors?.sort((a,b)=>a.homeAway==="home"?-1:1)||[];
+    return{
+      id:ev.id,
+      name:ev.name||"",
+      date:ev.date,
+      _sport:sportKey,
+      status:ev.status,
+      homeTeam:{name:home?.team?.shortDisplayName||home?.team?.displayName||"",abbr:home?.team?.abbreviation||"",logo:home?.team?.logo||"",score:home?.score||"",color:"#"+( home?.team?.color||"333"),winner:home?.winner},
+      awayTeam:{name:away?.team?.shortDisplayName||away?.team?.displayName||"",abbr:away?.team?.abbreviation||"",logo:away?.team?.logo||"",score:away?.score||"",color:"#"+(away?.team?.color||"333"),winner:away?.winner},
+      venue:comp.venue?.fullName||"",
+      notes:comp.notes?.[0]?.headline||"",
+      broadcast:comp.broadcasts?.[0]?.names?.[0]||"",
+    };
+  });
+}
+
+// Parse leaders
+function parseLeaders(data){
+  const leaderObj=data?.leaders||{};
+  const cats=Array.isArray(leaderObj)?leaderObj:Object.values(leaderObj);
+  const result=[];
+  for(const cat of cats.slice(0,6)){
+    const entries=Array.isArray(cat.leaders)?cat.leaders:Object.values(cat.leaders||{});
+    const top=entries[0];
+    if(!top||!top.athlete?.displayName) continue;
+    result.push({
+      category:cat.shortDisplayName||cat.displayName||cat.name||"",
+      name:top.athlete.displayName,
+      value:top.displayValue||"",
+      team:top.athlete.team?.abbreviation||top.team?.abbreviation||"",
+      photo:top.athlete.headshot?.href||"",
+      teamLogo:top.athlete.team?.logos?.[0]?.href||"",
+    });
+  }
+  return result;
+}
+
+// Score chip for game ticker
+function ScoreChip({ev}){
+  const live=isLive(ev);
+  const fin=isFinal(ev);
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:"10px",padding:"10px 20px",borderRight:"1px solid #1a1a1a",minWidth:"160px",flexShrink:0}}>
+      <div style={{display:"flex",flexDirection:"column",gap:"3px",flex:1}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px"}}>
+          <span style={{fontSize:"12px",fontWeight:ev.awayTeam.winner?"700":"400",color:ev.awayTeam.winner?"#fff":"#aaa",fontFamily:"'DM Mono',monospace"}}>{ev.awayTeam.abbr}</span>
+          <span style={{fontSize:"13px",fontWeight:"700",color:ev.awayTeam.winner?"#fff":"#888",fontFamily:"'DM Mono',monospace"}}>{ev.awayTeam.score}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px"}}>
+          <span style={{fontSize:"12px",fontWeight:ev.homeTeam.winner?"700":"400",color:ev.homeTeam.winner?"#fff":"#aaa",fontFamily:"'DM Mono',monospace"}}>{ev.homeTeam.abbr}</span>
+          <span style={{fontSize:"13px",fontWeight:"700",color:ev.homeTeam.winner?"#fff":"#888",fontFamily:"'DM Mono',monospace"}}>{ev.homeTeam.score}</span>
+        </div>
+      </div>
+      <div style={{fontSize:"10px",fontFamily:"'DM Mono',monospace",color:live?"#22c55e":fin?"#555":"#888",textAlign:"right",lineHeight:1.3,whiteSpace:"nowrap"}}>
+        {live&&<div style={{display:"flex",alignItems:"center",gap:"4px",justifyContent:"flex-end"}}><span className="live-dot" style={{width:"5px",height:"5px"}}/><span>{statusLabel(ev)}</span></div>}
+        {!live&&<span>{statusLabel(ev)}</span>}
+      </div>
+    </div>
+  );
+}
+
+// Game card
+function GameCard({ev,onClick}){
+  const live=isLive(ev);
+  const fin=isFinal(ev);
+  return(
+    <div className="card" onClick={()=>onClick&&onClick(ev)} style={{padding:"14px 16px",cursor:"pointer",borderLeft:live?"3px solid #22c55e":"3px solid transparent"}}>
+      {/* Status bar */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+          {live&&<span className="live-dot"/>}
+          <span style={{fontSize:"11px",fontFamily:"'DM Mono',monospace",color:live?"#22c55e":fin?"#555":"#888",fontWeight:"500"}}>{statusLabel(ev)}</span>
+        </div>
+        {ev.broadcast&&<span style={{fontSize:"10px",color:"#444",fontFamily:"'DM Mono',monospace"}}>{ev.broadcast}</span>}
+      </div>
+
+      {/* Teams */}
+      {[ev.awayTeam,ev.homeTeam].map((team,i)=>(
+        <div key={i} style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:i===0?"8px":"0"}}>
+          {team.logo?<img src={team.logo} style={{width:"28px",height:"28px",objectFit:"contain"}} alt=""/>:<div style={{width:"28px",height:"28px",borderRadius:"50%",background:team.color+"33",border:"1px solid "+team.color+"55"}}/>}
+          <span style={{flex:1,fontSize:"15px",fontWeight:team.winner?"700":"500",color:team.winner?"#fff":fin?"#888":"#ddd"}}>{team.name}</span>
+          <span style={{fontSize:"20px",fontWeight:"700",fontFamily:"'DM Mono',monospace",color:team.winner?"#fff":fin?"#666":"#ddd",minWidth:"28px",textAlign:"right"}}>{team.score||""}</span>
+        </div>
+      ))}
+
+      {ev.notes&&<div style={{marginTop:"8px",fontSize:"11px",color:"#555",fontFamily:"'DM Mono',monospace"}}>{ev.notes}</div>}
+    </div>
+  );
+}
+
+// Leader card
+function LeaderCard({leader}){
+  return(
+    <div className="card" style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:"12px"}}>
+      {leader.photo?<img src={leader.photo} style={{width:"40px",height:"40px",borderRadius:"50%",objectFit:"cover",background:"#1f1f1f"}} alt=""/>
+        :<div style={{width:"40px",height:"40px",borderRadius:"50%",background:"#1f1f1f",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px"}}>👤</div>}
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:"13px",fontWeight:"600",color:"#fff",marginBottom:"1px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{leader.name}</div>
+        <div style={{fontSize:"11px",color:"#555",fontFamily:"'DM Mono',monospace"}}>{leader.team} · {leader.category}</div>
+      </div>
+      <div style={{fontSize:"22px",fontWeight:"700",fontFamily:"'Bebas Neue',sans-serif",color:"#f0f0f0",letterSpacing:"0.5px",flexShrink:0}}>{leader.value}</div>
+    </div>
+  );
+}
+
+// News article card
+function NewsCard({article}){
+  return(
+    <a href={article.link||"#"} target="_blank" rel="noopener noreferrer">
+      <div className="card" style={{padding:"14px 16px",display:"flex",gap:"12px",alignItems:"flex-start"}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:"14px",fontWeight:"600",color:"#f0f0f0",lineHeight:1.4,marginBottom:"4px"}}>{article.headline}</div>
+          {article.desc&&<div style={{fontSize:"12px",color:"#666",lineHeight:1.45}}>{article.desc.slice(0,100)}{article.desc.length>100?"…":""}</div>}
+          {article.published&&<div style={{fontSize:"11px",color:"#444",marginTop:"6px",fontFamily:"'DM Mono',monospace"}}>{article.published}</div>}
+        </div>
+        {article.link&&<span style={{color:"#555",fontSize:"16px",flexShrink:0}}>↗</span>}
+      </div>
+    </a>
+  );
+}
+
+function SectionHeader({title,count}){
+  return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px",marginTop:"4px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{fontSize:"13px",fontWeight:"700",color:"#fff",letterSpacing:"0.02em"}}>{title}</span>
+        {count>0&&<span style={{fontSize:"11px",fontFamily:"'DM Mono',monospace",color:"#444"}}>{count}</span>}
+      </div>
+    </div>
+  );
+}
+
+function Skeleton({h=16,w="100%",mb=0}){
+  return <div className="skeleton" style={{height:h,width:w,marginBottom:mb}}/>;
+}
+
+function App(){
+  const[sport,setSport]=useState(SPORTS[0]);
+  const[events,setEvents]=useState([]);
+  const[leaders,setLeaders]=useState([]);
+  const[news,setNews]=useState([]);
+  const[allScores,setAllScores]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[tab,setTab]=useState("games"); // games | leaders | news
+  const[lastUpdated,setLastUpdated]=useState(null);
+  const timerRef=useRef(null);
+
+  async function fetchScoreboard(sp){
+    try{
+      const r=await fetch(`${PROXY}/espn?path=${encodeURIComponent(`sports/${sp.espn}/scoreboard`)}`);
+      const d=await r.json();
+      return parseEvents(d,sp.espn);
+    }catch{return[];}
+  }
+
+  async function fetchLeaders(sp){
+    try{
+      const r=await fetch(`${PROXY}/teamstats/${sp.espn.split("/")[0]}/${sp.espn.split("/")[1]}/0`);
+      // Use v3 leaders endpoint directly
+      const r2=await fetch(`${PROXY}/espn?path=${encodeURIComponent(`sports/${sp.espn.split("/")[0]}/${sp.espn.split("/")[1]}/leaders`)}`);
+      const d=await r2.json();
+      return parseLeaders(d);
+    }catch{return[];}
+  }
+
+  async function fetchNews(sp){
+    try{
+      const r=await fetch(`${PROXY}/espn?path=${encodeURIComponent(`sports/${sp.espn.split("/")[0]}/${sp.espn.split("/")[1]}/news?limit=8`)}`);
+      const d=await r.json();
+      return (d?.articles||[]).slice(0,8).map(a=>({
+        headline:a.headline||a.title||"",
+        link:a.links?.web?.href||a.link||a.url||null,
+        desc:a.description||a.summary||"",
+        published:a.published?timeSince(a.published)+" ago":null,
+      })).filter(a=>a.headline);
+    }catch{return[];}
+  }
+
+  async function loadAll(sp){
+    setLoading(true);
+    const[evs,ldr,nws]=await Promise.all([fetchScoreboard(sp),fetchLeaders(sp),fetchNews(sp)]);
+    setEvents(evs);
+    setLeaders(ldr);
+    setNews(nws);
+    setLastUpdated(new Date());
+    setLoading(false);
+  }
+
+  // Load all sport scoreboards for ticker
+  async function loadTicker(){
+    const all=await Promise.all(SPORTS.map(sp=>fetchScoreboard(sp)));
+    setAllScores(all.flat().filter(ev=>isLive(ev)||isFinal(ev)));
+  }
+
+  useEffect(()=>{loadAll(sport);loadTicker();},[]);
+  useEffect(()=>{loadAll(sport);},[sport]);
+
+  // Auto-refresh every 60s
+  useEffect(()=>{
+    timerRef.current=setInterval(()=>{loadAll(sport);loadTicker();},60000);
+    return()=>clearInterval(timerRef.current);
+  },[sport]);
+
+  const liveEvents=events.filter(isLive);
+  const upcomingEvents=events.filter(e=>!isLive(e)&&!isFinal(e));
+  const finalEvents=events.filter(isFinal);
+
+  return(
+    <div style={{maxWidth:"480px",margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column",background:"#0a0a0a"}}>
+
+      {/* Score Ticker */}
+      <div style={{background:"#0f0f0f",borderBottom:"1px solid #1a1a1a",overflow:"hidden",height:"52px",display:"flex",alignItems:"center"}}>
+        {allScores.length>0?(
+          <div style={{display:"flex",overflow:"hidden",width:"100%"}}>
+            <div style={{display:"flex",animation:"scrollX 40s linear infinite",flexShrink:0}}>
+              {[...allScores,...allScores].map((ev,i)=><ScoreChip key={i} ev={ev}/>)}
+            </div>
+          </div>
+        ):(
+          <div style={{padding:"0 16px",display:"flex",gap:"12px"}}>
+            {[1,2,3].map(i=><Skeleton key={i} h={32} w={140}/>)}
+          </div>
+        )}
+      </div>
+
+      {/* Header */}
+      <div style={{padding:"16px 16px 0"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"14px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:"28px",letterSpacing:"1px",color:"#fff"}}>HARDBALL</span>
+            <span style={{fontSize:"10px",color:"#333",fontFamily:"'DM Mono',monospace",marginTop:"4px"}}>LIVE</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
+            {lastUpdated&&<span style={{fontSize:"10px",color:"#333",fontFamily:"'DM Mono',monospace"}}>{timeSince(lastUpdated)} ago</span>}
+            <button onClick={()=>loadAll(sport)} style={{background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:"8px",padding:"6px 10px",color:"#888",fontSize:"12px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>↻</button>
+          </div>
+        </div>
+
+        {/* Sport tabs */}
+        <div style={{display:"flex",gap:"6px",overflowX:"auto",paddingBottom:"14px",scrollbarWidth:"none"}}>
+          {SPORTS.map(sp=>{
+            const on=sport.key===sp.key;
+            return(
+              <button key={sp.key} className="sport-tab" onClick={()=>{setSport(sp);setTab("games");}}
+                style={{background:on?sp.color:"#141414",color:on?"#000":"#888",border:on?"none":"1px solid #1f1f1f",flexShrink:0}}>
+                {sp.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content tabs */}
+        <div style={{display:"flex",gap:"0",background:"#111",borderRadius:"10px",padding:"3px",marginBottom:"16px"}}>
+          {[["games","🏟 Games"],["leaders","🏆 Leaders"],["news","📰 News"]].map(([k,l])=>{
+            const on=tab===k;
+            return(
+              <button key={k} className="tab-btn" onClick={()=>setTab(k)}
+                style={{flex:1,padding:"9px 4px",borderRadius:"8px",background:on?"#1f1f1f":"transparent",color:on?"#fff":"#555",fontSize:"13px",fontWeight:on?"600":"400",transition:"all .15s"}}>
+                {l}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{flex:1,padding:"0 16px 100px",overflowY:"auto"}}>
+
+        {/* GAMES TAB */}
+        {tab==="games"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:"8px",animation:"fadeIn .3s ease"}}>
+            {loading?(
+              [1,2,3].map(i=><div key={i} className="card" style={{padding:"16px"}}><Skeleton h={16} mb={8}/><Skeleton h={16}/></div>)
+            ):(
+              <>
+                {liveEvents.length>0&&(
+                  <div>
+                    <SectionHeader title="🔴 LIVE NOW" count={liveEvents.length}/>
+                    {liveEvents.map(ev=><GameCard key={ev.id} ev={ev}/>)}
+                    <div style={{marginBottom:"16px"}}/>
+                  </div>
+                )}
+                {upcomingEvents.length>0&&(
+                  <div>
+                    <SectionHeader title="UPCOMING" count={upcomingEvents.length}/>
+                    {upcomingEvents.map(ev=><GameCard key={ev.id} ev={ev}/>)}
+                    <div style={{marginBottom:"16px"}}/>
+                  </div>
+                )}
+                {finalEvents.length>0&&(
+                  <div>
+                    <SectionHeader title="FINAL" count={finalEvents.length}/>
+                    {finalEvents.map(ev=><GameCard key={ev.id} ev={ev}/>)}
+                  </div>
+                )}
+                {events.length===0&&!loading&&(
+                  <div style={{textAlign:"center",padding:"60px 20px",color:"#333"}}>
+                    <div style={{fontSize:"32px",marginBottom:"12px"}}>🏟</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:"12px"}}>No games today</div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* LEADERS TAB */}
+        {tab==="leaders"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:"8px",animation:"fadeIn .3s ease"}}>
+            <SectionHeader title="SEASON LEADERS" count={leaders.length}/>
+            {loading?([1,2,3,4].map(i=><div key={i} className="card" style={{padding:"14px",display:"flex",gap:"12px",alignItems:"center"}}><Skeleton h={40} w={40}/><div style={{flex:1}}><Skeleton h={14} mb={6}/><Skeleton h={10} w="60%"/></div><Skeleton h={24} w={40}/></div>))
+              :leaders.length>0?leaders.map((l,i)=><LeaderCard key={i} leader={l}/>)
+              :<div style={{textAlign:"center",padding:"40px",color:"#333",fontFamily:"'DM Mono',monospace",fontSize:"12px"}}>Leaders not available</div>}
+          </div>
+        )}
+
+        {/* NEWS TAB */}
+        {tab==="news"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:"8px",animation:"fadeIn .3s ease"}}>
+            <SectionHeader title="LATEST NEWS" count={news.length}/>
+            {loading?([1,2,3].map(i=><div key={i} className="card" style={{padding:"14px"}}><Skeleton h={14} mb={8}/><Skeleton h={11} w="80%" mb={6}/><Skeleton h={11} w="60%"/></div>))
+              :news.length>0?news.map((a,i)=><NewsCard key={i} article={a}/>)
+              :<div style={{textAlign:"center",padding:"40px",color:"#333",fontFamily:"'DM Mono',monospace",fontSize:"12px"}}>No news available</div>}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom nav */}
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:"480px",background:"#0a0a0a",borderTop:"1px solid #1a1a1a",display:"flex",justifyContent:"space-around",padding:"10px 0 20px",zIndex:100}}>
+        {[["🏟","Games"],["🏆","Leaders"],["📰","News"]].map(([icon,label],i)=>{
+          const k=["games","leaders","news"][i];
+          const on=tab===k;
+          return(
+            <button key={k} onClick={()=>setTab(k)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",background:"none",border:"none",cursor:"pointer",padding:"4px 20px"}}>
+              <span style={{fontSize:"20px"}}>{icon}</span>
+              <span style={{fontSize:"10px",color:on?"#fff":"#444",fontWeight:on?"600":"400",fontFamily:"'DM Sans',sans-serif"}}>{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
