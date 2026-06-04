@@ -424,6 +424,25 @@ const TEAM_STAT_INFO={
   goalsAgainst:   {full:"Goals Against",         desc:"Total goals allowed. Fewer is better — elite teams allow under 200.",   link:"https://www.nhl.com/stats/teams",max:300,good:"low"},
   powerPlayPct:   {full:"Power Play %",          desc:"Percentage of power plays that result in a goal. 22%+ is elite.",      link:"https://www.nhl.com/stats/teams",max:30,good:"high"},
   penaltyKillPct: {full:"Penalty Kill %",        desc:"Percentage of opponent power plays stopped. 82%+ is strong.",          link:"https://www.nhl.com/stats/teams",max:100,good:"high"},
+  // MLB extra
+  runs:           {full:"Runs Scored",           desc:"Total runs scored this season. More runs = more wins. Elite offenses score 800+ per season.",    link:"https://www.mlb.com/stats/runs",max:900,good:"high"},
+  doubles:        {full:"Doubles",               desc:"Two-base hits. Extra-base hits drive runners in and extend innings.",   link:"https://www.mlb.com/stats/doubles",max:350,good:"high"},
+  triples:        {full:"Triples",               desc:"Three-base hits — the rarest hit in baseball. Requires speed and power to the gaps.",            link:"https://www.mlb.com/stats/triples",max:40,good:"high"},
+  onBasePct:      {full:"On-Base Percentage",    desc:"How often batters reach base. .330+ is solid. Elite lineups post .350+.", link:"https://www.mlb.com/stats/on-base-percentage",max:0.4,good:"high"},
+  sluggingPct:    {full:"Slugging Percentage",   desc:"Total bases per at-bat. Measures raw power. .430+ is a strong slugging lineup.",                 link:"https://www.mlb.com/stats/slugging-percentage",max:0.55,good:"high"},
+  OPS:            {full:"On-Base + Slugging",    desc:"OBP + SLG combined. Best single number for lineup quality. .800+ is elite.",                     link:"https://www.mlb.com/stats/on-base-plus-slugging",max:0.9,good:"high"},
+  totalBases:     {full:"Total Bases",           desc:"Total bases from all hits. Measures overall offensive production volume.",                        link:"https://www.mlb.com/stats/total-bases",max:2800,good:"high"},
+  extraBaseHits:  {full:"Extra Base Hits",       desc:"Doubles + Triples + HRs combined. Extra-base hits score runners and change games.",              link:"https://www.mlb.com/stats/",max:550,good:"high"},
+  qualityStarts:  {full:"Quality Starts",        desc:"Games where starter pitched 6+ innings with ≤3 earned runs. Measures rotation depth.",           link:"https://www.mlb.com/stats/quality-starts",max:100,good:"high"},
+  saves:          {full:"Saves",                 desc:"Total saves by the bullpen. A reliever earns a save protecting a lead in the final inning(s).",  link:"https://www.mlb.com/stats/saves",max:60,good:"high"},
+  // NFL extra
+  rushingAttempts:{full:"Rushing Attempts",      desc:"Total rushing attempts. Run-first teams average 30+ carries per game.", link:"https://www.nfl.com/stats/team-stats/",max:550,good:"high"},
+  yardsPerRushAttempt:{full:"Yards Per Carry",   desc:"Average yards per rush. 4.5+ is excellent. Under 3.5 means the run game is struggling.",        link:"https://www.nfl.com/stats/team-stats/",max:6,good:"high"},
+  rushingTouchdowns:{full:"Rushing Touchdowns",  desc:"TDs scored on the ground. A strong red-zone run game converts short yardage.",                  link:"https://www.nfl.com/stats/team-stats/",max:30,good:"high"},
+  yardsPerPassAttempt:{full:"Yards Per Attempt", desc:"Average yards per pass thrown. 7.5+ is elite — the top QB efficiency metric.",                  link:"https://www.nfl.com/stats/team-stats/",max:10,good:"high"},
+  passingTouchdowns:{full:"Passing Touchdowns",  desc:"Total TD passes thrown. Elite offenses throw 35+ TD passes per season.",                        link:"https://www.nfl.com/stats/team-stats/",max:50,good:"high"},
+  totalPoints:    {full:"Total Points Scored",   desc:"Total points scored this season. 400+ is a historically great offense.",                        link:"https://www.nfl.com/stats/team-stats/",max:500,good:"high"},
+  pointsPerGame:  {full:"Points Per Game",       desc:"Average points per game. 27+ is elite offense. Under 17 is a serious problem.",                 link:"https://www.nfl.com/stats/team-stats/",max:40,good:"high"},
 };
 
 function getTeamStatInfo(stat){
