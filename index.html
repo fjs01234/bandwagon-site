@@ -368,6 +368,53 @@ const STAT_INFO={
   GAA:{full:"Goals Against Average",desc:"Average goals allowed per 60 minutes. Under 2.50 is excellent.",link:"https://www.nhl.com/stats/goalies",max:4,good:"low"},
 };
 
+// Team stat info lookup — keyed by stat name or abbreviation
+const TEAM_STAT_INFO={
+  // NBA team
+  avgPoints:      {full:"Points Per Game",      desc:"Average points scored per game as a team. League average is ~114.",    link:"https://www.nba.com/stats/teams/traditional",max:130,good:"high"},
+  avgRebounds:    {full:"Rebounds Per Game",     desc:"Average total rebounds per game. Winning the glass wins games.",         link:"https://www.nba.com/stats/teams/traditional",max:55,good:"high"},
+  avgAssists:     {full:"Assists Per Game",      desc:"Average assists per game. High assists = ball movement and teamwork.",    link:"https://www.nba.com/stats/teams/traditional",max:35,good:"high"},
+  fieldGoalPct:   {full:"Field Goal %",          desc:"Percentage of shots made. Elite offenses shoot 48%+.",                   link:"https://www.nba.com/stats/teams/traditional",max:60,good:"high"},
+  assistTurnoverRatio:{full:"Assist/Turnover Ratio",desc:"Assists divided by turnovers. Above 2.0 is efficient ball movement.", link:"https://www.nba.com/stats/teams/advanced",max:4,good:"high"},
+  avgFouls:       {full:"Fouls Per Game",        desc:"Average team fouls. Fewer fouls keeps stars on the floor.",             link:"https://www.nba.com/stats/teams/traditional",max:30,good:"low"},
+  gamesPlayed:    {full:"Games Played",          desc:"Total games played this season.",                                         link:null,max:82,good:"high"},
+  // NFL team
+  completionPct:  {full:"Completion %",          desc:"Percentage of passes completed. Elite offenses complete 67%+.",          link:"https://www.nfl.com/stats/team-stats/",max:75,good:"high"},
+  completions:    {full:"Completions",           desc:"Total completed passes. Volume measure of passing activity.",             link:"https://www.nfl.com/stats/team-stats/",max:400,good:"high"},
+  interceptions:  {full:"Interceptions Thrown",  desc:"Total INTs thrown. Fewer is better — turnovers kill drives.",           link:"https://www.nfl.com/stats/team-stats/",max:20,good:"low"},
+  interceptionPct:{full:"Interception %",        desc:"% of passes intercepted. Under 2% is good QB decision-making.",         link:"https://www.nfl.com/stats/team-stats/",max:5,good:"low"},
+  passingYards:   {full:"Passing Yards",         desc:"Total passing yards gained. Big air attack teams throw for 4,000+ yards.",link:"https://www.nfl.com/stats/team-stats/",max:5000,good:"high"},
+  rushingYards:   {full:"Rushing Yards",         desc:"Total yards gained on the ground. Balance is key — 1,800+ is elite.",   link:"https://www.nfl.com/stats/team-stats/",max:2500,good:"high"},
+  touchdowns:     {full:"Total Touchdowns",      desc:"All touchdowns scored. Every 6 points on the board.",                   link:"https://www.nfl.com/stats/team-stats/",max:50,good:"high"},
+  sacks:          {full:"Sacks",                 desc:"Times the QB was tackled behind the line of scrimmage.",                link:"https://www.nfl.com/stats/team-stats/",max:60,good:"high"},
+  // MLB batting
+  teamGamesPlayed:{full:"Games Played",          desc:"Total games played this season.",                                        link:null,max:162,good:"high"},
+  atBats:         {full:"At Bats",               desc:"Total plate appearances not counting walks or sacrifices.",              link:"https://www.mlb.com/stats/",max:5600,good:"high"},
+  hits:           {full:"Hits",                  desc:"Total hits by the team. More hits = more opportunities to score.",       link:"https://www.mlb.com/stats/",max:1600,good:"high"},
+  RBIs:           {full:"Runs Batted In",        desc:"Total RBIs. How many runs the team has driven in with their bats.",     link:"https://www.mlb.com/stats/",max:800,good:"high"},
+  homeRuns:       {full:"Home Runs",             desc:"Total team home runs. The most exciting play in baseball.",              link:"https://www.mlb.com/stats/home-runs",max:250,good:"high"},
+  battingAverage: {full:"Team Batting Average",  desc:"Combined batting average. The classic measure of a lineup's quality.",  link:"https://www.mlb.com/stats/batting-average",max:0.3,good:"high"},
+  strikeouts:     {full:"Strikeouts (Batting)",  desc:"How many times the team has struck out. Fewer is better at the plate.", link:"https://www.mlb.com/stats/",max:1700,good:"low"},
+  walks:          {full:"Walks (BB)",            desc:"Total bases on balls. More walks = patient hitters working the count.", link:"https://www.mlb.com/stats/",max:700,good:"high"},
+  stolenBases:    {full:"Stolen Bases",          desc:"Total stolen bases. Speed and aggression on the basepaths.",            link:"https://www.mlb.com/stats/stolen-bases",max:150,good:"high"},
+  // MLB pitching
+  ERA:            {full:"Earned Run Average",    desc:"Average earned runs allowed per 9 innings. Under 3.50 is strong.",      link:"https://www.mlb.com/stats/earned-run-average",max:6,good:"low"},
+  WHIP:           {full:"WHIP",                  desc:"Walks + Hits Per Inning. Under 1.20 is excellent control.",             link:"https://www.mlb.com/stats/whip",max:2,good:"low"},
+  // NHL team
+  goals:          {full:"Goals Scored",          desc:"Total goals scored by the team this season.",                           link:"https://www.nhl.com/stats/teams",max:300,good:"high"},
+  goalsAgainst:   {full:"Goals Against",         desc:"Total goals allowed. Fewer is better — elite teams allow under 200.",   link:"https://www.nhl.com/stats/teams",max:300,good:"low"},
+  powerPlayPct:   {full:"Power Play %",          desc:"Percentage of power plays that result in a goal. 22%+ is elite.",      link:"https://www.nhl.com/stats/teams",max:30,good:"high"},
+  penaltyKillPct: {full:"Penalty Kill %",        desc:"Percentage of opponent power plays stopped. 82%+ is strong.",          link:"https://www.nhl.com/stats/teams",max:100,good:"high"},
+};
+
+function getTeamStatInfo(stat){
+  // Try by stat.name first, then by abbreviation/shortDisplayName
+  return TEAM_STAT_INFO[stat.name]
+      || TEAM_STAT_INFO[stat.abbreviation]
+      || TEAM_STAT_INFO[stat.shortDisplayName]
+      || {full: stat.displayName||stat.shortDisplayName||stat.name, desc:"Season team statistic.", link:null, max:null, good:"high"};
+}
+
 // ── Main App ──
 function App(){
   const[sel,setSel]     =useState(null);
@@ -526,34 +573,66 @@ function App(){
                           <div>
                             <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em",marginBottom:"10px"}}>TEAM SEASON LEADERS · {live.teamStatsYear||""} · ESPN</div>
                             <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
-                              {live.teamLeaders.map((item,i)=>(
-                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"8px",padding:"11px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                  <div>
-                                    <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",marginBottom:"3px"}}>{item.category}</div>
-                                    <div style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{item.athlete}</div>
-                                    <div style={{fontSize:"10px",color:"#666",fontFamily:"monospace"}}>{item.pos}</div>
+                              {live.teamLeaders.map((item,i)=>{
+                                const info=STAT_INFO[item.category]||{full:item.category,desc:"Season stat leader.",link:null,max:100,good:"high"};
+                                const numVal=parseFloat(String(item.value).replace(/[^0-9.]/g,""))||0;
+                                const pct=Math.min(100,Math.max(2,(numVal/info.max)*100));
+                                return(
+                                  <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"8px",padding:"12px 14px"}}>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}}>
+                                      <div style={{flex:1,marginRight:"10px"}}>
+                                        <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",marginBottom:"2px"}}>{info.full||item.category}</div>
+                                        <div style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{item.athlete}</div>
+                                        <div style={{fontSize:"10px",color:"#555",fontFamily:"monospace"}}>{item.pos}</div>
+                                      </div>
+                                      <div style={{textAlign:"right",flexShrink:0}}>
+                                        <div style={{fontSize:"24px",fontWeight:"900",color:ac,lineHeight:1}}>{item.value}</div>
+                                        {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:ac,textDecoration:"none",fontFamily:"monospace"}}>learn more ↗</a>}
+                                      </div>
+                                    </div>
+                                    {info.desc&&<div style={{fontSize:"10px",color:"#555",lineHeight:1.4,marginBottom:"6px"}}>{info.desc}</div>}
+                                    <div style={{background:"#1a1a1a",borderRadius:"3px",height:"4px",overflow:"hidden"}}>
+                                      <div style={{width:pct+"%",height:"100%",background:ac,borderRadius:"3px",transition:"width .6s ease"}}/>
+                                    </div>
                                   </div>
-                                  <div style={{fontSize:"22px",fontWeight:"900",color:ac}}>{item.value}</div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         ):live.teamStats&&live.teamStats.length>0?(
-                          <div style={{display:"flex",flexDirection:"column",gap:"12px"}}>
+                          <div style={{display:"flex",flexDirection:"column",gap:"16px"}}>
                             <div style={{fontSize:"9px",fontFamily:"monospace",color:"#777",letterSpacing:"0.12em"}}>{(live.teamStatsYear||"")+" TEAM STATS · ESPN"}</div>
                             {live.teamStats.map((cat,i)=>{
-                              const valid=(cat.stats||cat.athletes||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00",""].includes(s.displayValue));
+                              const valid=(cat.stats||[]).filter(s=>s.displayValue&&!["0","--","0.0","0.00",""].includes(s.displayValue));
                               if(!valid.length) return null;
                               return(
                                 <div key={i}>
-                                  <div style={{fontSize:"9px",fontFamily:"monospace",color:"#666",letterSpacing:"0.1em",marginBottom:"6px"}}>{(cat.displayName||cat.name||"").toUpperCase()}</div>
-                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
-                                    {valid.slice(0,10).map((s,j)=>(
-                                      <div key={j} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"7px",padding:"8px 11px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"6px"}}>
-                                        <span style={{fontSize:"9px",fontFamily:"monospace",color:"#777",flexShrink:0}}>{s.shortDisplayName||s.abbreviation||s.name}</span>
-                                        <span style={{fontSize:"13px",fontWeight:"bold",color:"#f0ece4"}}>{s.displayValue}</span>
-                                      </div>
-                                    ))}
+                                  <div style={{fontSize:"10px",fontWeight:"bold",color:"#888",letterSpacing:"0.1em",marginBottom:"8px",paddingBottom:"6px",borderBottom:"1px solid #1a1a1a"}}>{(cat.displayName||cat.name||"").toUpperCase()}</div>
+                                  <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                                    {valid.slice(0,10).map((s,j)=>{
+                                      const info=getTeamStatInfo(s);
+                                      const numVal=parseFloat(String(s.displayValue).replace(/[^0-9.]/g,""))||0;
+                                      const pct=info.max?Math.min(100,Math.max(2,info.good==="low"?(1-(numVal/info.max))*100:(numVal/info.max)*100)):50;
+                                      const barColor=info.good==="low"?"#60a5fa":ac;
+                                      return(
+                                        <div key={j} style={{background:"#0d0d0d",borderRadius:"7px",padding:"9px 11px"}}>
+                                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"5px"}}>
+                                            <div style={{flex:1,marginRight:"10px"}}>
+                                              <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
+                                              <div style={{fontSize:"10px",color:"#555",lineHeight:1.4,marginTop:"1px"}}>{info.desc}</div>
+                                            </div>
+                                            <div style={{flexShrink:0,textAlign:"right"}}>
+                                              <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.displayValue}</div>
+                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:ac,textDecoration:"none",fontFamily:"monospace"}}>learn more ↗</a>}
+                                            </div>
+                                          </div>
+                                          <div style={{background:"#1a1a1a",borderRadius:"3px",height:"4px",overflow:"hidden"}}>
+                                            <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
+                                          </div>
+                                          {info.max&&<div style={{fontSize:"9px",color:"#2a2a2a",fontFamily:"monospace",marginTop:"2px"}}>{info.good==="high"?"higher is better":"lower is better"}</div>}
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               );
