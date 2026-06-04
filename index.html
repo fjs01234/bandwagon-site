@@ -323,15 +323,15 @@ async function loadTeamData(team) {
   };
 }
 
-// Position full names
-const POSITIONS={
-  PG:"Point Guard",SG:"Shooting Guard",SF:"Small Forward",PF:"Power Forward",C:"Center",
-  QB:"Quarterback",RB:"Running Back",WR:"Wide Receiver",TE:"Tight End",K:"Kicker",
-  LB:"Linebacker",DE:"Defensive End",DT:"Defensive Tackle",CB:"Cornerback",S:"Safety",
-  SP:"Starting Pitcher",RP:"Relief Pitcher",C:"Catcher",SS:"Shortstop",
-  "1B":"First Base","2B":"Second Base","3B":"Third Base",LF:"Left Field",CF:"Center Field",RF:"Right Field",
-  G:"Guard",F:"Forward",
-};
+// Position lookup — sport-aware to avoid C=Center vs C=Catcher conflict
+function getPosition(pos, sport) {
+  const nba = {PG:"Point Guard",SG:"Shooting Guard",SF:"Small Forward",PF:"Power Forward",C:"Center",G:"Guard",F:"Forward",GF:"Guard-Forward",FC:"Forward-Center",G_F:"Guard-Forward"};
+  const nfl = {QB:"Quarterback",RB:"Running Back",WR:"Wide Receiver",TE:"Tight End",FB:"Fullback",OT:"Offensive Tackle",OG:"Offensive Guard",OL:"Offensive Lineman",C:"Center",DE:"Defensive End",DT:"Defensive Tackle",NT:"Nose Tackle",LB:"Linebacker",OLB:"Outside Linebacker",ILB:"Inside Linebacker",MLB:"Middle Linebacker",CB:"Cornerback",S:"Safety",SS:"Strong Safety",FS:"Free Safety",DB:"Defensive Back",K:"Kicker",P:"Punter",LS:"Long Snapper",KR:"Kick Returner",PR:"Punt Returner"};
+  const mlb = {SP:"Starting Pitcher",RP:"Relief Pitcher",CL:"Closer",MR:"Middle Reliever",C:"Catcher",SS:"Shortstop","1B":"First Base","2B":"Second Base","3B":"Third Base",LF:"Left Field",CF:"Center Field",RF:"Right Field",OF:"Outfield",DH:"Designated Hitter",IF:"Infield"};
+  const nhl = {C:"Center",LW:"Left Wing",RW:"Right Wing",D:"Defenseman",G:"Goalie"};
+  const map = sport==="basketball"?nba:sport==="football"?nfl:sport==="baseball"?mlb:sport==="hockey"?nhl:{};
+  return map[pos] || pos;
+}
 
 // Stat info: full name, description, learn-more link, max scale, good direction
 const STAT_INFO={
@@ -459,7 +459,7 @@ function PlayerCard(p, i, ac, getInfo){
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"11px"}}>
         <div>
           <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
-          <div style={{fontSize:"10px",fontFamily:"monospace",color:"#777",marginTop:"2px"}}>{POSITIONS[p.pos]||p.pos}</div>
+          <div style={{fontSize:"10px",fontFamily:"monospace",color:"#777",marginTop:"2px"}}>{getPosition(p.pos, sel?.espn?.split("/")?.[0])}</div>
         </div>
         <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
       </div>
@@ -775,7 +775,7 @@ function App(){
                                   {positions.map(pos=>{
                                     const on=playerPosFilter===pos;
                                     return<button key={pos} className="sp" onClick={()=>setPlayerPosFilter(pos)} style={{padding:"4px 10px",borderRadius:"16px",border:"1px solid "+(on?ac:"#2a2a2a"),background:on?ac+"22":"#141414",color:on?ac:"#888",fontSize:"10px",fontFamily:"monospace"}}>
-                                      {pos==="ALL"?"All Positions":(POSITIONS[pos]||pos)}
+                                      {pos==="ALL"?"All Positions":getPosition(pos, sel?.espn?.split("/")?.[0])}
                                     </button>;
                                   })}
                                 </div>
@@ -789,7 +789,7 @@ function App(){
                                 </div>
                               </div>
 
-                              <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{displayed.length} of {live.players.length} PLAYERS{playerPosFilter!=="ALL"?` · ${POSITIONS[playerPosFilter]||playerPosFilter}`:""}</div>
+                              <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{displayed.length} of {live.players.length} PLAYERS{playerPosFilter!=="ALL"?` · ${getPosition(playerPosFilter, sel?.espn?.split("/")?.[0])}`:""}</div>
 
                               {/* Group by position if sort=pos */}
                               {playerSort==="pos"?(()=>{
@@ -798,7 +798,7 @@ function App(){
                                 return Object.entries(groups).map(([pos,players])=>(
                                   <div key={pos} style={{marginBottom:"16px"}}>
                                     <div style={{fontSize:"10px",fontWeight:"bold",color:ac,fontFamily:"monospace",letterSpacing:"0.1em",marginBottom:"8px",paddingBottom:"5px",borderBottom:"1px solid #1a1a1a"}}>
-                                      {POSITIONS[pos]||pos} ({players.length})
+                                      {getPosition(pos, sel?.espn?.split("/")?.[0])} ({players.length})
                                     </div>
                                     <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
                                       {players.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"}))}
