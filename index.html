@@ -323,6 +323,51 @@ async function loadTeamData(team) {
   };
 }
 
+// Position full names
+const POSITIONS={
+  PG:"Point Guard",SG:"Shooting Guard",SF:"Small Forward",PF:"Power Forward",C:"Center",
+  QB:"Quarterback",RB:"Running Back",WR:"Wide Receiver",TE:"Tight End",K:"Kicker",
+  LB:"Linebacker",DE:"Defensive End",DT:"Defensive Tackle",CB:"Cornerback",S:"Safety",
+  SP:"Starting Pitcher",RP:"Relief Pitcher",C:"Catcher",SS:"Shortstop",
+  "1B":"First Base","2B":"Second Base","3B":"Third Base",LF:"Left Field",CF:"Center Field",RF:"Right Field",
+  G:"Guard",F:"Forward",
+};
+
+// Stat info: full name, description, learn-more link, max scale, good direction
+const STAT_INFO={
+  // NBA
+  PPG:{full:"Points Per Game",desc:"Average points scored each game. The primary measure of offensive output.",link:"https://www.nba.com/stats/leaders",max:35,good:"high"},
+  RPG:{full:"Rebounds Per Game",desc:"Average boards grabbed per game. Measures dominance on the glass.",link:"https://www.nba.com/stats/leaders?StatCategory=REB",max:15,good:"high"},
+  APG:{full:"Assists Per Game",desc:"Average passes leading to a score per game. Measures court vision and playmaking.",link:"https://www.nba.com/stats/leaders?StatCategory=AST",max:12,good:"high"},
+  "FG%":{full:"Field Goal %",desc:"Percentage of shots made from the field. Elite shooters hit above 50%.",link:"https://www.nba.com/stats/leaders?StatCategory=FG_PCT",max:70,good:"high"},
+  "3P%":{full:"3-Point %",desc:"Percentage of three-pointers made. 40%+ is considered elite.",link:"https://www.nba.com/stats/leaders?StatCategory=FG3_PCT",max:50,good:"high"},
+  BPG:{full:"Blocks Per Game",desc:"Average shots blocked per game. Elite shot-blockers average 2+.",link:"https://www.nba.com/stats/leaders?StatCategory=BLK",max:4,good:"high"},
+  SPG:{full:"Steals Per Game",desc:"Average steals per game. Measures defensive instincts and quickness.",link:"https://www.nba.com/stats/leaders?StatCategory=STL",max:3,good:"high"},
+  // MLB batting
+  AVG:{full:"Batting Average",desc:"Hits divided by at-bats. The classic measure of a hitter. .300+ is elite.",link:"https://www.mlb.com/stats/batting-average",max:0.4,good:"high"},
+  HR:{full:"Home Runs",desc:"Total home runs hit. The power stat — one swing, one run (or more).",link:"https://www.mlb.com/stats/home-runs",max:50,good:"high"},
+  RBI:{full:"Runs Batted In",desc:"Runs scored due to the batter's play. Measures run production and clutch hitting.",link:"https://www.mlb.com/stats/runs-batted-in",max:130,good:"high"},
+  OPS:{full:"On-Base + Slugging",desc:"OBP + SLG combined. The best single number for overall hitting value. .900+ is elite.",link:"https://www.mlb.com/stats/on-base-plus-slugging",max:1.1,good:"high"},
+  // MLB pitching
+  ERA:{full:"Earned Run Average",desc:"Average earned runs allowed per 9 innings. Under 3.00 is ace-level.",link:"https://www.mlb.com/stats/earned-run-average",max:6,good:"low"},
+  K:{full:"Strikeouts",desc:"Total batters struck out. The strikeout is the ultimate pitcher's weapon.",link:"https://www.mlb.com/stats/strikeouts",max:250,good:"high"},
+  W:{full:"Wins",desc:"Games where the pitcher was credited with a win. A team stat reflected on the pitcher.",link:"https://www.mlb.com/stats/wins",max:20,good:"high"},
+  WHIP:{full:"Walks + Hits Per Inning",desc:"WHIP measures how many baserunners a pitcher allows per inning. Under 1.10 is elite.",link:"https://www.mlb.com/stats/whip",max:2,good:"low"},
+  // NFL
+  PYDS:{full:"Passing Yards",desc:"Total yards gained on completed passes. The signature QB volume stat.",link:"https://www.nfl.com/stats/player-stats/",max:5000,good:"high"},
+  PTD:{full:"Passing Touchdowns",desc:"Total TD passes thrown. Elite QBs throw 35+ per season.",link:"https://www.nfl.com/stats/player-stats/",max:50,good:"high"},
+  RYDS:{full:"Rushing Yards",desc:"Total yards gained running the ball. 1,000+ in a season is the RB milestone.",link:"https://www.nfl.com/stats/player-stats/",max:2000,good:"high"},
+  RTD:{full:"Rushing Touchdowns",desc:"TDs scored on the ground. Goal-line backs rack these up.",link:"https://www.nfl.com/stats/player-stats/",max:20,good:"high"},
+  REC:{full:"Receptions",desc:"Total passes caught. 100+ catches in a season is elite WR territory.",link:"https://www.nfl.com/stats/player-stats/",max:150,good:"high"},
+  REYDS:{full:"Receiving Yards",desc:"Total yards gained catching the ball. 1,000+ is the WR benchmark.",link:"https://www.nfl.com/stats/player-stats/",max:1800,good:"high"},
+  // NHL
+  G:{full:"Goals",desc:"Total goals scored. 40+ in a season puts you in the conversation for the Rocket Richard Trophy.",link:"https://www.nhl.com/stats/skaters",max:60,good:"high"},
+  A:{full:"Assists",desc:"Total assists on goals. Great passers often rack up more assists than goals.",link:"https://www.nhl.com/stats/skaters",max:80,good:"high"},
+  PTS:{full:"Points",desc:"Goals + Assists combined. The primary measure of a skater's offensive production.",link:"https://www.nhl.com/stats/skaters",max:130,good:"high"},
+  "SV%":{full:"Save Percentage",desc:"Percentage of shots saved by the goalie. .920+ is considered elite.",link:"https://www.nhl.com/stats/goalies",max:1,good:"high"},
+  GAA:{full:"Goals Against Average",desc:"Average goals allowed per 60 minutes. Under 2.50 is excellent.",link:"https://www.nhl.com/stats/goalies",max:4,good:"low"},
+};
+
 // ── Main App ──
 function App(){
   const[sel,setSel]     =useState(null);
@@ -551,21 +596,42 @@ function App(){
                       <div style={{animation:"fadeIn .3s ease"}}>
                         {live.players&&live.players.length>0?(
                           <div>
-                            <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{live.players.length} PLAYERS WITH LIVE STATS</div>
-                            <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                            <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{live.players.length} PLAYERS WITH LIVE STATS · TAP STAT FOR DETAILS</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
                               {live.players.map((p,i)=>(
-                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"12px 14px"}}>
-                                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}}>
-                                    <div style={{fontSize:"14px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"13px 14px"}}>
+                                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"11px"}}>
+                                    <div>
+                                      <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+                                      <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginTop:"2px"}}>{POSITIONS[p.pos]||p.pos}</div>
+                                    </div>
                                     <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
                                   </div>
-                                  <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"5px"}}>
-                                    {p.stats.map((s,j)=>(
-                                      <div key={j} style={{background:"#0d0d0d",borderRadius:"5px",padding:"7px 10px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                        <span style={{fontSize:"9px",fontFamily:"monospace",color:"#666"}}>{s.l}</span>
-                                        <span style={{fontSize:"12px",fontWeight:"bold",color:"#f0ece4"}}>{s.v}</span>
-                                      </div>
-                                    ))}
+                                  <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
+                                    {p.stats.map((s,j)=>{
+                                      const info=STAT_INFO[s.l]||{full:s.l,desc:"Season statistic.",link:null,max:100,good:"high"};
+                                      const numVal=parseFloat(s.v.replace(/[^0-9.]/g,""))||0;
+                                      const pct=Math.min(100,Math.max(2,(numVal/info.max)*100));
+                                      const barColor=info.good==="high"?ac:"#60a5fa";
+                                      return(
+                                        <div key={j} style={{background:"#0d0d0d",borderRadius:"7px",padding:"9px 11px"}}>
+                                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
+                                            <div style={{flex:1,minWidth:0,marginRight:"10px"}}>
+                                              <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
+                                              <div style={{fontSize:"10px",color:"#555",lineHeight:1.4,marginTop:"2px"}}>{info.desc}</div>
+                                            </div>
+                                            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",flexShrink:0}}>
+                                              <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.v}</div>
+                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:ac,textDecoration:"none",marginTop:"2px",fontFamily:"monospace"}}>learn more ↗</a>}
+                                            </div>
+                                          </div>
+                                          <div style={{background:"#1a1a1a",borderRadius:"3px",height:"4px",overflow:"hidden"}}>
+                                            <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
+                                          </div>
+                                          <div style={{fontSize:"9px",color:"#333",fontFamily:"monospace",marginTop:"3px"}}>{info.good==="high"?"higher is better":"lower is better"} · max scale: {info.max}</div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               ))}
