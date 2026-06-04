@@ -638,17 +638,17 @@ function App(){
                                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"5px"}}>
                                             <div style={{flex:1,marginRight:"10px"}}>
                                               <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
-                                              <div style={{fontSize:"10px",color:"#555",lineHeight:1.4,marginTop:"1px"}}>{info.desc}</div>
+                                              <div style={{fontSize:"10px",color:"#999",lineHeight:1.4,marginTop:"1px"}}>{info.desc}</div>
                                             </div>
                                             <div style={{flexShrink:0,textAlign:"right"}}>
                                               <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.displayValue}</div>
-                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:ac,textDecoration:"none",fontFamily:"monospace"}}>learn more ↗</a>}
+                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:"#aaa",textDecoration:"none",fontFamily:"monospace"}}>learn more ↗</a>}
                                             </div>
                                           </div>
-                                          <div style={{background:"#1a1a1a",borderRadius:"3px",height:"4px",overflow:"hidden"}}>
+                                          <div style={{background:"#2a2a2a",borderRadius:"3px",height:"5px",overflow:"hidden"}}>
                                             <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
                                           </div>
-                                          {info.max&&<div style={{fontSize:"9px",color:"#2a2a2a",fontFamily:"monospace",marginTop:"2px"}}>{info.good==="high"?"higher is better":"lower is better"}</div>}
+                                          {info.max&&<div style={{fontSize:"9px",color:"#777",fontFamily:"monospace",marginTop:"4px"}}>{info.good==="high"?"↑ higher is better":"↓ lower is better"} · scale 0–{info.max}</div>}
                                         </div>
                                       );
                                     })}
@@ -716,17 +716,17 @@ function App(){
                                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
                                             <div style={{flex:1,minWidth:0,marginRight:"10px"}}>
                                               <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
-                                              <div style={{fontSize:"10px",color:"#555",lineHeight:1.4,marginTop:"2px"}}>{info.desc}</div>
+                                              <div style={{fontSize:"10px",color:"#999",lineHeight:1.4,marginTop:"2px"}}>{info.desc}</div>
                                             </div>
                                             <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",flexShrink:0}}>
                                               <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.v}</div>
-                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:ac,textDecoration:"none",marginTop:"2px",fontFamily:"monospace"}}>learn more ↗</a>}
+                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:"#aaa",textDecoration:"none",marginTop:"2px",fontFamily:"monospace"}}>learn more ↗</a>}
                                             </div>
                                           </div>
-                                          <div style={{background:"#1a1a1a",borderRadius:"3px",height:"4px",overflow:"hidden"}}>
+                                          <div style={{background:"#2a2a2a",borderRadius:"3px",height:"5px",overflow:"hidden"}}>
                                             <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
                                           </div>
-                                          <div style={{fontSize:"9px",color:"#333",fontFamily:"monospace",marginTop:"3px"}}>{info.good==="high"?"higher is better":"lower is better"} · max scale: {info.max}</div>
+                                          <div style={{fontSize:"9px",color:"#777",fontFamily:"monospace",marginTop:"4px"}}>{info.good==="high"?"↑ higher is better":"↓ lower is better"} · scale 0–{info.max}</div>
                                         </div>
                                       );
                                     })}
