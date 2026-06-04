@@ -453,6 +453,46 @@ function getTeamStatInfo(stat){
       || {full: stat.displayName||stat.shortDisplayName||stat.name, desc:"Season team statistic.", link:null, max:null, good:"high"};
 }
 
+function PlayerCard(p, i, ac, getInfo){
+  return(
+    <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"13px 14px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"11px"}}>
+        <div>
+          <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
+          <div style={{fontSize:"10px",fontFamily:"monospace",color:"#777",marginTop:"2px"}}>{POSITIONS[p.pos]||p.pos}</div>
+        </div>
+        <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
+        {p.stats.map((s,j)=>{
+          const info=getInfo(s.l);
+          const numVal=parseFloat(String(s.v).replace(/[^0-9.]/g,""))||0;
+          const pct=info.max?Math.min(100,Math.max(2,(numVal/info.max)*100)):50;
+          const barColor=info.good==="low"?"#60a5fa":ac;
+          return(
+            <div key={j} style={{background:"#0d0d0d",borderRadius:"7px",padding:"9px 11px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
+                <div style={{flex:1,minWidth:0,marginRight:"10px"}}>
+                  <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
+                  <div style={{fontSize:"10px",color:"#999",lineHeight:1.4,marginTop:"2px"}}>{info.desc}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",flexShrink:0}}>
+                  <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.v}</div>
+                  {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:"#aaa",textDecoration:"none",marginTop:"2px",fontFamily:"monospace"}}>learn more ↗</a>}
+                </div>
+              </div>
+              <div style={{background:"#2a2a2a",borderRadius:"3px",height:"5px",overflow:"hidden"}}>
+                <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
+              </div>
+              <div style={{fontSize:"9px",color:"#777",fontFamily:"monospace",marginTop:"4px"}}>{info.good==="low"?"↓ lower is better":"↑ higher is better"}{info.max?` · scale 0–${info.max}`:""}</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main App ──
 function App(){
   const[sel,setSel]     =useState(null);
@@ -460,6 +500,8 @@ function App(){
   const[search,setSearch]=useState("");
   const[tab,setTab]     =useState("teams");
   const[viewTab,setVTab]=useState("hottakes"); // hottakes | stats | news | players
+  const[playerSort,setPlayerSort]=useState("default"); // default | pos | stat
+  const[playerPosFilter,setPlayerPosFilter]=useState("ALL");
   const[openTip,setOT]  =useState(null);
   const[qStep,setQS]    =useState(0);
   const[qScore,setQSc]  =useState(0);
@@ -483,7 +525,7 @@ function App(){
   },[]);
 
   async function pick(team){
-    setSel(team);setTab("teams");setVTab("hottakes");
+    setSel(team);setTab("teams");setVTab("hottakes");setPlayerSort("default");setPlayerPosFilter("ALL");
     if(cache[team.name]) return;
     setLoad(true);setErr(null);
     try{const d=await loadTeamData(team);setCache(p=>({...p,[team.name]:d}));}
@@ -711,50 +753,66 @@ function App(){
                     {/* Players sub-tab */}
                     {viewTab==="players"&&(
                       <div style={{animation:"fadeIn .3s ease"}}>
-                        {live.players&&live.players.length>0?(
-                          <div>
-                            <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{live.players.length} PLAYERS WITH LIVE STATS · TAP STAT FOR DETAILS</div>
-                            <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
-                              {live.players.map((p,i)=>(
-                                <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"13px 14px"}}>
-                                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"11px"}}>
-                                    <div>
-                                      <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
-                                      <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginTop:"2px"}}>{POSITIONS[p.pos]||p.pos}</div>
-                                    </div>
-                                    <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
-                                  </div>
-                                  <div style={{display:"flex",flexDirection:"column",gap:"7px"}}>
-                                    {p.stats.map((s,j)=>{
-                                      const info=STAT_INFO[s.l]||{full:s.l,desc:"Season statistic.",link:null,max:100,good:"high"};
-                                      const numVal=parseFloat(s.v.replace(/[^0-9.]/g,""))||0;
-                                      const pct=Math.min(100,Math.max(2,(numVal/info.max)*100));
-                                      const barColor=info.good==="high"?ac:"#60a5fa";
-                                      return(
-                                        <div key={j} style={{background:"#0d0d0d",borderRadius:"7px",padding:"9px 11px"}}>
-                                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"6px"}}>
-                                            <div style={{flex:1,minWidth:0,marginRight:"10px"}}>
-                                              <div style={{fontSize:"11px",fontWeight:"bold",color:"#ccc"}}>{info.full}</div>
-                                              <div style={{fontSize:"10px",color:"#999",lineHeight:1.4,marginTop:"2px"}}>{info.desc}</div>
-                                            </div>
-                                            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",flexShrink:0}}>
-                                              <div style={{fontSize:"18px",fontWeight:"900",color:"#f0ece4",lineHeight:1}}>{s.v}</div>
-                                              {info.link&&<a href={info.link} target="_blank" rel="noopener noreferrer" style={{fontSize:"9px",color:"#aaa",textDecoration:"none",marginTop:"2px",fontFamily:"monospace"}}>learn more ↗</a>}
-                                            </div>
-                                          </div>
-                                          <div style={{background:"#2a2a2a",borderRadius:"3px",height:"5px",overflow:"hidden"}}>
-                                            <div style={{width:pct+"%",height:"100%",background:barColor,borderRadius:"3px",transition:"width .6s ease"}}/>
-                                          </div>
-                                          <div style={{fontSize:"9px",color:"#777",fontFamily:"monospace",marginTop:"4px"}}>{info.good==="high"?"↑ higher is better":"↓ lower is better"} · scale 0–{info.max}</div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
+                        {live.players&&live.players.length>0?(()=>{
+                          // Get unique positions
+                          const positions=["ALL",...[...new Set(live.players.map(p=>p.pos).filter(Boolean))].sort()];
+                          // Filter by position
+                          let displayed=playerPosFilter==="ALL"?live.players:live.players.filter(p=>p.pos===playerPosFilter);
+                          // Sort
+                          if(playerSort==="pos") displayed=[...displayed].sort((a,b)=>(a.pos||"").localeCompare(b.pos||""));
+                          else if(playerSort==="stat") displayed=[...displayed].sort((a,b)=>{
+                            const av=parseFloat(String(a.stats?.[0]?.v||"0").replace(/[^0-9.]/g,""))||0;
+                            const bv=parseFloat(String(b.stats?.[0]?.v||"0").replace(/[^0-9.]/g,""))||0;
+                            return bv-av;
+                          });
+
+                          return(
+                            <div>
+                              {/* Controls */}
+                              <div style={{marginBottom:"12px"}}>
+                                {/* Position filter */}
+                                <div style={{display:"flex",gap:"5px",flexWrap:"wrap",marginBottom:"8px"}}>
+                                  {positions.map(pos=>{
+                                    const on=playerPosFilter===pos;
+                                    return<button key={pos} className="sp" onClick={()=>setPlayerPosFilter(pos)} style={{padding:"4px 10px",borderRadius:"16px",border:"1px solid "+(on?ac:"#2a2a2a"),background:on?ac+"22":"#141414",color:on?ac:"#888",fontSize:"10px",fontFamily:"monospace"}}>
+                                      {pos==="ALL"?"All Positions":(POSITIONS[pos]||pos)}
+                                    </button>;
+                                  })}
                                 </div>
-                              ))}
+                                {/* Sort options */}
+                                <div style={{display:"flex",gap:"5px",alignItems:"center"}}>
+                                  <span style={{fontSize:"10px",color:"#555",fontFamily:"monospace",marginRight:"4px"}}>SORT:</span>
+                                  {[["default","Roster Order"],["pos","By Position"],["stat","By Top Stat ↓"]].map(([k,l])=>{
+                                    const on=playerSort===k;
+                                    return<button key={k} className="sp" onClick={()=>setPlayerSort(k)} style={{padding:"4px 10px",borderRadius:"16px",border:"1px solid "+(on?"#c8102e":"#2a2a2a"),background:on?"#c8102e22":"#141414",color:on?"#c8102e":"#888",fontSize:"10px",fontFamily:"monospace"}}>{l}</button>;
+                                  })}
+                                </div>
+                              </div>
+
+                              <div style={{fontSize:"10px",fontFamily:"monospace",color:"#555",marginBottom:"10px"}}>{displayed.length} of {live.players.length} PLAYERS{playerPosFilter!=="ALL"?` · ${POSITIONS[playerPosFilter]||playerPosFilter}`:""}</div>
+
+                              {/* Group by position if sort=pos */}
+                              {playerSort==="pos"?(()=>{
+                                const groups={};
+                                for(const p of displayed){const k=p.pos||"?";if(!groups[k])groups[k]=[];groups[k].push(p);}
+                                return Object.entries(groups).map(([pos,players])=>(
+                                  <div key={pos} style={{marginBottom:"16px"}}>
+                                    <div style={{fontSize:"10px",fontWeight:"bold",color:ac,fontFamily:"monospace",letterSpacing:"0.1em",marginBottom:"8px",paddingBottom:"5px",borderBottom:"1px solid #1a1a1a"}}>
+                                      {POSITIONS[pos]||pos} ({players.length})
+                                    </div>
+                                    <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                                      {players.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"}))}
+                                    </div>
+                                  </div>
+                                ));
+                              })():(
+                                <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+                                  {displayed.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"}))}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ):(
+                          );
+                        })():(
                           <div style={{textAlign:"center",padding:"30px",color:"#555",fontFamily:"monospace",fontSize:"12px"}}>
                             No player stats available via ESPN for this team/season.
                           </div>
