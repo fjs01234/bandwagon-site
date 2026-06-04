@@ -2,24 +2,25 @@
 <html>
 <head><style>body{background:#111;color:#0f0;font-family:monospace;padding:20px;font-size:12px;white-space:pre-wrap;word-break:break-all;}</style></head>
 <body>
-<h2 style="color:#fff">ESPN Raw Structure Check</h2>
+<h2 style="color:#fff">ESPN Proxy Check</h2>
 <div id="out">Loading...</div>
 <script>
 const PROXY = "https://sports-proxy-a8md.onrender.com";
 async function run() {
   const out = document.getElementById("out");
   const tests = [
-    ["NBA Knicks rawcheck",   `${PROXY}/rawcheck/basketball/nba/18`],
-    ["MLB Mets rawcheck",     `${PROXY}/rawcheck/baseball/mlb/21`],
-    ["NFL Bills rawcheck",    `${PROXY}/rawcheck/football/nfl/2`],
-    ["Spurs players",         `${PROXY}/players/basketball/nba/24`],
+    ["Knicks teamstats",    `${PROXY}/teamstats/basketball/nba/18`],
+    ["Mets teamstats",      `${PROXY}/teamstats/baseball/mlb/21`],
+    ["Bills teamstats",     `${PROXY}/teamstats/football/nfl/2`],
+    ["Knicks players",      `${PROXY}/players/basketball/nba/18`],
+    ["Mets players",        `${PROXY}/players/baseball/mlb/21`],
   ];
   let html = "";
   for (const [name, url] of tests) {
     try {
       const r = await fetch(url);
       const d = await r.json();
-      html += `<div style="border:1px solid #333;margin:10px 0;padding:10px;"><div style="color:#ff0;font-size:14px;margin-bottom:6px">▶ ${name}</div><pre>${JSON.stringify(d, null, 2).slice(0, 3000)}</pre></div>`;
+      html += `<div style="border:1px solid #333;margin:10px 0;padding:10px;"><div style="color:#ff0;font-size:14px;margin-bottom:6px">▶ ${name}</div><pre>${JSON.stringify(d, null, 2).slice(0, 1500)}</pre></div>`;
     } catch(e) {
       html += `<div style="color:red">❌ ${name}: ${e.message}</div>`;
     }
