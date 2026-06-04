@@ -453,13 +453,13 @@ function getTeamStatInfo(stat){
       || {full: stat.displayName||stat.shortDisplayName||stat.name, desc:"Season team statistic.", link:null, max:null, good:"high"};
 }
 
-function PlayerCard(p, i, ac, getInfo){
+function PlayerCard(p, i, ac, getInfo, sport){
   return(
     <div key={i} style={{background:"#141414",border:"1px solid #2a2a2a",borderRadius:"10px",padding:"13px 14px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"11px"}}>
         <div>
           <div style={{fontSize:"15px",fontWeight:"bold",color:"#f0ece4"}}>{p.name}</div>
-          <div style={{fontSize:"10px",fontFamily:"monospace",color:"#777",marginTop:"2px"}}>{getPosition(p.pos, sel?.espn?.split("/")?.[0])}</div>
+          <div style={{fontSize:"10px",fontFamily:"monospace",color:"#777",marginTop:"2px"}}>{getPosition(p.pos, sport)}</div>
         </div>
         <div style={{fontSize:"10px",fontFamily:"monospace",color:ac,background:ac+"22",padding:"3px 8px",borderRadius:"4px"}}>{p.jersey?`#${p.jersey} · `:""}{p.pos}</div>
       </div>
@@ -801,13 +801,13 @@ function App(){
                                       {getPosition(pos, sel?.espn?.split("/")?.[0])} ({players.length})
                                     </div>
                                     <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                                      {players.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"}))}
+                                      {players.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"},sel?.espn?.split("/")[0]))}
                                     </div>
                                   </div>
                                 ));
                               })():(
                                 <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                                  {displayed.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"}))}
+                                  {displayed.map((p,i)=>PlayerCard(p,i,ac,info=>STAT_INFO[info]||{full:info,desc:"Season statistic.",link:null,max:100,good:"high"},sel?.espn?.split("/")[0]))}
                                 </div>
                               )}
                             </div>
